@@ -211,6 +211,8 @@ public:
 	virtual void swap_index(int i, int j) const	// no so const...
 	{
 		swap(x[i],x[j]);
+		if(kernel_type == PRECOMPUTED)
+			swap(sampleSerialNumbers[i],sampleSerialNumbers[j]);
 		if(x_square) swap(x_square[i],x_square[j]);
 	}
 protected:
@@ -219,6 +221,15 @@ protected:
 
 private:
 	const svm_node **x;
+	/**
+	 * The sample serial numbers.
+	 * <code>x[i][0] with i=0...(len-1)</code>.
+	 * This is only used in case of a precomputed kernel.
+	 * This is merely a cache, which brings us a huge speedup,
+	 * because we spare ourselves the repeated float2int conversion,
+	 * and we enhance array access locality.
+	 */
+	int *sampleSerialNumbers;
 	double *x_square;
 
 	// svm_parameter
@@ -246,7 +257,7 @@ private:
 	}
 	double kernel_precomputed(int i, int j) const
 	{
-		return x[i][(int)(x[j][0].value)].value;
+		return x[i][sampleSerialNumbers[j]].value;
 	}
 };
 
@@ -275,6 +286,18 @@ Kernel::Kernel(int l, svm_node * const * x_, const svm_parameter& param)
 
 	clone(x,x_,l);
 
+	// extract the sample serial numbers from x
+	if (kernel_type == PRECOMPUTED)
+	{
+		sampleSerialNumbers = new int[l];
+		for(int i=0;i<l;i++)
+			sampleSerialNumbers[i] = (int)x[i][0].value;
+	}
+	else
+	{
+		sampleSerialNumbers = 0;
+	}
+
 	if(kernel_type == RBF)
 	{
 		x_square = new double[l];
@@ -288,6 +311,7 @@ Kernel::Kernel(int l, svm_node * const * x_, const svm_parameter& param)
 Kernel::~Kernel()
 {
 	delete[] x;
+	delete[] sampleSerialNumbers;
 	delete[] x_square;
 }
 

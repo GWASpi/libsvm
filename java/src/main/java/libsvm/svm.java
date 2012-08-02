@@ -163,6 +163,15 @@ abstract class QMatrix {
 
 abstract class Kernel extends QMatrix {
 	private svm_node[][] x;
+	/**
+	 * The sample serial numbers.
+	 * <code>x[i][0] with i=0...(len-1)</code>.
+	 * This is only used in case of a precomputed kernel.
+	 * This is merely a cache, which brings us a huge speedup,
+	 * because we spare ourselves the repeated float2int conversion,
+	 * and we enhance array access locality.
+	 */
+	private int[] sampleSerialNumbers;
 	private final double[] x_square;
 
 	// svm_parameter
@@ -180,6 +189,12 @@ abstract class Kernel extends QMatrix {
 			svm_node[] tmp = x[i];
 			x[i] = x[j];
 			x[j] = tmp;
+			if (kernel_type == svm_parameter.PRECOMPUTED) {
+				// also swap the cached index
+				final int tmpIndex = sampleSerialNumbers[i];
+				sampleSerialNumbers[i] = sampleSerialNumbers[j];
+				sampleSerialNumbers[j] = tmpIndex;
+			}
 		}
 		if(x_square != null)
 		{ // swap(double, x_square[i], x_square[j]);
@@ -214,7 +229,7 @@ abstract class Kernel extends QMatrix {
 			case svm_parameter.SIGMOID:
 				return Math.tanh(gamma*dot(x[i],x[j])+coef0);
 			case svm_parameter.PRECOMPUTED:
-				return x[i][(int)(x[j][0].value)].value;
+				return x[i][sampleSerialNumbers[j]].value;
 			default:
 				return 0;	// java
 		}
@@ -228,6 +243,15 @@ abstract class Kernel extends QMatrix {
 		this.coef0 = param.coef0;
 
 		x = (svm_node[][])x_.clone();
+
+		// extract the sample serial numbers from x
+		if(kernel_type == svm_parameter.PRECOMPUTED)
+		{
+			sampleSerialNumbers = new int[x.length];
+			for (int i = 0; i < x.length; i++) {
+				sampleSerialNumbers[i] = (int) x[i][0].value;
+			}
+		}
 
 		if(kernel_type == svm_parameter.RBF)
 		{
