@@ -91,7 +91,7 @@ class Cache {
 	void swap_index(int i, int j)
 	{
 		if(i==j) return;
-		
+
 		if(head[i].len > 0) lru_delete(head[i]);
 		if(head[j].len > 0) lru_delete(head[j]);
 		swap(Qfloat[],head[i].data,head[j].data);
@@ -317,7 +317,7 @@ class Solver {
 	double[] G_bar;		// gradient, if we treat free variables as 0
 	int l;
 	boolean unshrink;	// XXX
-	
+
 	static final double INF = java.lang.Double.POSITIVE_INFINITY;
 
 	double get_C(int i)
@@ -385,7 +385,7 @@ class Solver {
 				for(j=0;j<active_size;j++)
 					if(is_free(j))
 						G[i] += alpha[j] * Q_i[j];
-			}	
+			}
 		}
 		else
 		{
@@ -483,7 +483,7 @@ class Solver {
 				else
 					counter = 1;	// do shrinking next iteration
 			}
-			
+
 			int i = working_set[0];
 			int j = working_set[1];
 
@@ -509,7 +509,7 @@ class Solver {
 				double diff = alpha[i] - alpha[j];
 				alpha[i] += delta;
 				alpha[j] += delta;
-			
+
 				if(diff > 0)
 				{
 					if(alpha[j] < 0)
@@ -629,7 +629,7 @@ class Solver {
 			}
 
 		}
-		
+
 		if(iter >= max_iter)
 		{
 			if(active_size < l)
@@ -676,15 +676,15 @@ class Solver {
 		// j: mimimizes the decrease of obj value
 		//    (if quadratic coefficeint <= 0, replace it with tau)
 		//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
-		
+
 		double Gmax = -INF;
 		double Gmax2 = -INF;
 		int Gmax_idx = -1;
 		int Gmin_idx = -1;
 		double obj_diff_min = INF;
-	
+
 		for(int t=0;t<active_size;t++)
-			if(y[t]==+1)	
+			if(y[t]==+1)
 			{
 				if(!is_upper_bound(t))
 					if(-G[t] >= Gmax)
@@ -702,12 +702,12 @@ class Solver {
 						Gmax_idx = t;
 					}
 			}
-	
+
 		int i = Gmax_idx;
 		Qfloat[] Q_i = null;
 		if(i != -1) // null Q_i not accessed: Gmax=-INF if i=-1
 			Q_i = Q.get_Q(i,active_size);
-	
+
 		for(int j=0;j<active_size;j++)
 		{
 			if(y[j]==+1)
@@ -719,13 +719,13 @@ class Solver {
 						Gmax2 = G[j];
 					if (grad_diff > 0)
 					{
-						double obj_diff; 
+						double obj_diff;
 						double quad_coef = QD[i]+QD[j]-2.0*y[i]*Q_i[j];
 						if (quad_coef > 0)
 							obj_diff = -(grad_diff*grad_diff)/quad_coef;
 						else
 							obj_diff = -(grad_diff*grad_diff)/TAU;
-	
+
 						if (obj_diff <= obj_diff_min)
 						{
 							Gmin_idx=j;
@@ -743,13 +743,13 @@ class Solver {
 						Gmax2 = -G[j];
 					if (grad_diff > 0)
 					{
-						double obj_diff; 
+						double obj_diff;
 						double quad_coef = QD[i]+QD[j]+2.0*y[i]*Q_i[j];
 						if (quad_coef > 0)
 							obj_diff = -(grad_diff*grad_diff)/quad_coef;
 						else
 							obj_diff = -(grad_diff*grad_diff)/TAU;
-	
+
 						if (obj_diff <= obj_diff_min)
 						{
 							Gmin_idx=j;
@@ -769,7 +769,7 @@ class Solver {
 	}
 
 	private boolean be_shrunk(int i, double Gmax1, double Gmax2)
-	{	
+	{
 		if(is_upper_bound(i))
 		{
 			if(y[i]==+1)
@@ -781,7 +781,7 @@ class Solver {
 		{
 			if(y[i]==+1)
 				return(G[i] > Gmax2);
-			else	
+			else
 				return(G[i] > Gmax1);
 		}
 		else
@@ -799,7 +799,7 @@ class Solver {
 		{
 			if(y[i]==+1)
 			{
-				if(!is_upper_bound(i))	
+				if(!is_upper_bound(i))
 				{
 					if(-G[i] >= Gmax1)
 						Gmax1 = -G[i];
@@ -810,14 +810,14 @@ class Solver {
 						Gmax2 = G[i];
 				}
 			}
-			else		
+			else
 			{
-				if(!is_upper_bound(i))	
+				if(!is_upper_bound(i))
 				{
 					if(-G[i] >= Gmax2)
 						Gmax2 = -G[i];
 				}
-				if(!is_lower_bound(i))	
+				if(!is_lower_bound(i))
 				{
 					if(G[i] >= Gmax1)
 						Gmax1 = G[i];
@@ -825,7 +825,7 @@ class Solver {
 			}
 		}
 
-		if(unshrink == false && Gmax1 + Gmax2 <= eps*10) 
+		if(unshrink == false && Gmax1 + Gmax2 <= eps*10)
 		{
 			unshrink = true;
 			reconstruct_gradient();
@@ -913,18 +913,18 @@ final class Solver_NU extends Solver
 		// j: minimizes the decrease of obj value
 		//    (if quadratic coefficeint <= 0, replace it with tau)
 		//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
-	
+
 		double Gmaxp = -INF;
 		double Gmaxp2 = -INF;
 		int Gmaxp_idx = -1;
-	
+
 		double Gmaxn = -INF;
 		double Gmaxn2 = -INF;
 		int Gmaxn_idx = -1;
-	
+
 		int Gmin_idx = -1;
 		double obj_diff_min = INF;
-	
+
 		for(int t=0;t<active_size;t++)
 			if(y[t]==+1)
 			{
@@ -944,7 +944,7 @@ final class Solver_NU extends Solver
 						Gmaxn_idx = t;
 					}
 			}
-	
+
 		int ip = Gmaxp_idx;
 		int in = Gmaxn_idx;
 		Qfloat[] Q_ip = null;
@@ -953,25 +953,25 @@ final class Solver_NU extends Solver
 			Q_ip = Q.get_Q(ip,active_size);
 		if(in != -1)
 			Q_in = Q.get_Q(in,active_size);
-	
+
 		for(int j=0;j<active_size;j++)
 		{
 			if(y[j]==+1)
 			{
-				if (!is_lower_bound(j))	
+				if (!is_lower_bound(j))
 				{
 					double grad_diff=Gmaxp+G[j];
 					if (G[j] >= Gmaxp2)
 						Gmaxp2 = G[j];
 					if (grad_diff > 0)
 					{
-						double obj_diff; 
+						double obj_diff;
 						double quad_coef = QD[ip]+QD[j]-2*Q_ip[j];
 						if (quad_coef > 0)
 							obj_diff = -(grad_diff*grad_diff)/quad_coef;
 						else
 							obj_diff = -(grad_diff*grad_diff)/TAU;
-	
+
 						if (obj_diff <= obj_diff_min)
 						{
 							Gmin_idx=j;
@@ -989,13 +989,13 @@ final class Solver_NU extends Solver
 						Gmaxn2 = -G[j];
 					if (grad_diff > 0)
 					{
-						double obj_diff; 
+						double obj_diff;
 						double quad_coef = QD[in]+QD[j]-2*Q_in[j];
 						if (quad_coef > 0)
 							obj_diff = -(grad_diff*grad_diff)/quad_coef;
 						else
 							obj_diff = -(grad_diff*grad_diff)/TAU;
-	
+
 						if (obj_diff <= obj_diff_min)
 						{
 							Gmin_idx=j;
@@ -1008,13 +1008,13 @@ final class Solver_NU extends Solver
 
 		if(Math.max(Gmaxp+Gmaxp2,Gmaxn+Gmaxn2) < eps)
 			return 1;
-	
+
 		if(y[Gmin_idx] == +1)
 			working_set[0] = Gmaxp_idx;
 		else
 			working_set[0] = Gmaxn_idx;
 		working_set[1] = Gmin_idx;
-	
+
 		return 0;
 	}
 
@@ -1024,14 +1024,14 @@ final class Solver_NU extends Solver
 		{
 			if(y[i]==+1)
 				return(-G[i] > Gmax1);
-			else	
+			else
 				return(-G[i] > Gmax4);
 		}
 		else if(is_lower_bound(i))
 		{
 			if(y[i]==+1)
 				return(G[i] > Gmax2);
-			else	
+			else
 				return(G[i] > Gmax3);
 		}
 		else
@@ -1044,7 +1044,7 @@ final class Solver_NU extends Solver
 		double Gmax2 = -INF;	// max { y_i * grad(f)_i | y_i = +1, i in I_low(\alpha) }
 		double Gmax3 = -INF;	// max { -y_i * grad(f)_i | y_i = -1, i in I_up(\alpha) }
 		double Gmax4 = -INF;	// max { y_i * grad(f)_i | y_i = -1, i in I_low(\alpha) }
- 
+
 		// find maximal violating pair first
 		int i;
 		for(i=0;i<active_size;i++)
@@ -1060,14 +1060,14 @@ final class Solver_NU extends Solver
 			if(!is_lower_bound(i))
 			{
 				if(y[i]==+1)
-				{	
+				{
 					if(G[i] > Gmax2) Gmax2 = G[i];
 				}
 				else	if(G[i] > Gmax3) Gmax3 = G[i];
 			}
 		}
 
-		if(unshrink == false && Math.max(Gmax1+Gmax2,Gmax3+Gmax4) <= eps*10) 
+		if(unshrink == false && Math.max(Gmax1+Gmax2,Gmax3+Gmax4) <= eps*10)
 		{
 			unshrink = true;
 			reconstruct_gradient();
@@ -1089,7 +1089,7 @@ final class Solver_NU extends Solver
 				}
 			}
 	}
-	
+
 	double calculate_rho()
 	{
 		int nr_free1 = 0,nr_free2 = 0;
@@ -1292,7 +1292,7 @@ public class svm {
 	//
 	// construct and solve various formulations
 	//
-	public static final int LIBSVM_VERSION=312; 
+	public static final int LIBSVM_VERSION=312;
 	public static final Random rand = new Random();
 
 	private static svm_print_interface svm_print_stdout = new svm_print_interface()
@@ -1306,7 +1306,7 @@ public class svm {
 
 	private static svm_print_interface svm_print_string = svm_print_stdout;
 
-	static void info(String s) 
+	static void info(String s)
 	{
 		svm_print_string.print(s);
 	}
@@ -1470,7 +1470,7 @@ public class svm {
 		{
 			alpha2[i] = alpha2[i+l] = Math.min(sum,C);
 			sum -= alpha2[i];
-			
+
 			linear_term[i] = - prob.y[i];
 			y[i] = 1;
 
@@ -1483,7 +1483,7 @@ public class svm {
 			alpha2, C, C, param.eps, si, param.shrinking);
 
 		svm.info("epsilon = "+(-si.r)+"\n");
-		
+
 		for(i=0;i<l;i++)
 			alpha[i] = alpha2[i] - alpha2[i+l];
 	}
@@ -1494,7 +1494,7 @@ public class svm {
 	static class decision_function
 	{
 		double[] alpha;
-		double rho;	
+		double rho;
 	};
 
 	static decision_function svm_train_one(
@@ -1555,7 +1555,7 @@ public class svm {
 	}
 
 	// Platt's binary SVM Probablistic Output: an improvement from Lin et al.
-	private static void sigmoid_train(int l, double[] dec_values, double[] labels, 
+	private static void sigmoid_train(int l, double[] dec_values, double[] labels,
 				  double[] probAB)
 	{
 		double A, B;
@@ -1565,7 +1565,7 @@ public class svm {
 		for (i=0;i<l;i++)
 			if (labels[i] > 0) prior1+=1;
 			else prior0+=1;
-	
+
 		int max_iter=100;	// Maximal number of iterations
 		double min_step=1e-10;	// Minimal step taken in line search
 		double sigma=1e-12;	// For numerically strict PD of Hessian
@@ -1575,8 +1575,8 @@ public class svm {
 		double[] t= new double[l];
 		double fApB,p,q,h11,h22,h21,g1,g2,det,dA,dB,gd,stepsize;
 		double newA,newB,newf,d1,d2;
-		int iter; 
-	
+		int iter;
+
 		// Initial Point and Initial Fun Value
 		A=0.0; B=Math.log((prior0+1.0)/(prior1+1.0));
 		double fval = 0.0;
@@ -1622,7 +1622,7 @@ public class svm {
 			// Stopping Criteria
 			if (Math.abs(g1)<eps && Math.abs(g2)<eps)
 				break;
-			
+
 			// Finding Newton direction: -inv(H') * g
 			det=h11*h22-h21*h21;
 			dA=-(h22*g1 - h21 * g2) / det;
@@ -1655,14 +1655,14 @@ public class svm {
 				else
 					stepsize = stepsize / 2.0;
 			}
-			
+
 			if (stepsize < min_step)
 			{
 				svm.info("Line search fails in two-class probability estimates\n");
 				break;
 			}
 		}
-		
+
 		if (iter>=max_iter)
 			svm.info("Reaching maximal iterations in two-class probability estimates\n");
 		probAB[0]=A;probAB[1]=B;
@@ -1685,7 +1685,7 @@ public class svm {
 		double[][] Q=new double[k][k];
 		double[] Qp=new double[k];
 		double pQp, eps=0.005/k;
-	
+
 		for (t=0;t<k;t++)
 		{
 			p[t]=1.0/k;  // Valid if k = 1
@@ -1720,7 +1720,7 @@ public class svm {
 					max_error=error;
 			}
 			if (max_error<eps) break;
-		
+
 			for (t=0;t<k;t++)
 			{
 				double diff=(-Qp[t]+pQp)/Q[t][t];
@@ -1762,7 +1762,7 @@ public class svm {
 			subprob.l = prob.l-(end-begin);
 			subprob.x = new svm_node[subprob.l][];
 			subprob.y = new double[subprob.l];
-			
+
 			k=0;
 			for(j=0;j<begin;j++)
 			{
@@ -1782,7 +1782,7 @@ public class svm {
 					p_count++;
 				else
 					n_count++;
-			
+
 			if(p_count==0 && n_count==0)
 				for(j=begin;j<end;j++)
 					dec_values[perm[j]] = 0;
@@ -1812,13 +1812,13 @@ public class svm {
 					dec_values[perm[j]]=dec_value[0];
 					// ensure +1 -1 order; reason not using CV subroutine
 					dec_values[perm[j]] *= submodel.label[0];
-				}		
+				}
 			}
-		}		
+		}
 		sigmoid_train(prob.l,dec_values,prob.y,probAB);
 	}
 
-	// Return parameter of a Laplace distribution 
+	// Return parameter of a Laplace distribution
 	private static double svm_svr_probability(svm_problem prob, svm_parameter param)
 	{
 		int i;
@@ -1833,15 +1833,15 @@ public class svm {
 		{
 			ymv[i]=prob.y[i]-ymv[i];
 			mae += Math.abs(ymv[i]);
-		}		
+		}
 		mae /= prob.l;
 		double std=Math.sqrt(2*mae*mae);
 		int count=0;
 		mae=0;
 		for(i=0;i<prob.l;i++)
-			if (Math.abs(ymv[i]) > 5*std) 
+			if (Math.abs(ymv[i]) > 5*std)
 				count=count+1;
-			else 
+			else
 				mae+=Math.abs(ymv[i]);
 		mae /= (prob.l-count);
 		svm.info("Prob. model for test data: target value = predicted value + z,\nz: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma="+mae+"\n");
@@ -1883,7 +1883,7 @@ public class svm {
 					label = new_data;
 					new_data = new int[max_nr_class];
 					System.arraycopy(count,0,new_data,0,count.length);
-					count = new_data;					
+					count = new_data;
 				}
 				label[nr_class] = this_label;
 				count[nr_class] = 1;
@@ -1964,19 +1964,19 @@ public class svm {
 			int[] tmp_nr_class = new int[1];
 			int[][] tmp_label = new int[1][];
 			int[][] tmp_start = new int[1][];
-			int[][] tmp_count = new int[1][];			
+			int[][] tmp_count = new int[1][];
 			int[] perm = new int[l];
 
 			// group training data of the same class
 			svm_group_classes(prob,tmp_nr_class,tmp_label,tmp_start,tmp_count,perm);
-			int nr_class = tmp_nr_class[0];			
+			int nr_class = tmp_nr_class[0];
 			int[] label = tmp_label[0];
 			int[] start = tmp_start[0];
 			int[] count = tmp_count[0];
- 			
-			if(nr_class == 1) 
+
+			if(nr_class == 1)
 				svm.info("WARNING: training data in only one class. See README for details.\n");
-			
+
 			svm_node[][] x = new svm_node[l][];
 			int i;
 			for(i=0;i<l;i++)
@@ -2141,7 +2141,7 @@ public class svm {
 		}
 		return model;
 	}
-	
+
 	// Stratified cross validation
 	public static void svm_cross_validation(svm_problem prob, svm_parameter param, int nr_fold, double[] target)
 	{
@@ -2149,7 +2149,7 @@ public class svm {
 		int[] fold_start = new int[nr_fold+1];
 		int l = prob.l;
 		int[] perm = new int[l];
-		
+
 		// stratified cv may not give leave-one-out rate
 		// Each class to l folds -> some folds may have zero elements
 		if((param.svm_type == svm_parameter.C_SVC ||
@@ -2164,7 +2164,7 @@ public class svm {
 
 			int nr_class = tmp_nr_class[0];
 			int[] start = tmp_start[0];
-			int[] count = tmp_count[0];		
+			int[] count = tmp_count[0];
 
 			// random shuffle and then data grouped by fold using the array perm
 			int[] fold_count = new int[nr_fold];
@@ -2305,7 +2305,7 @@ public class svm {
 		{
 			int nr_class = model.nr_class;
 			int l = model.l;
-		
+
 			double[] kvalue = new double[l];
 			for(i=0;i<l;i++)
 				kvalue[i] = Kernel.k_function(x,model.SV[i],model.param);
@@ -2328,7 +2328,7 @@ public class svm {
 					int sj = start[j];
 					int ci = model.nSV[i];
 					int cj = model.nSV[j];
-				
+
 					int k;
 					double[] coef1 = model.sv_coef[j-1];
 					double[] coef2 = model.sv_coef[i];
@@ -2337,7 +2337,7 @@ public class svm {
 					for(k=0;k<cj;k++)
 						sum += coef2[sj+k] * kvalue[sj+k];
 					sum -= model.rho[p];
-					dec_values[p] = sum;					
+					dec_values[p] = sum;
 
 					if(dec_values[p] > 0)
 						++vote[i];
@@ -2381,7 +2381,7 @@ public class svm {
 
 			double min_prob=1e-7;
 			double[][] pairwise_prob=new double[nr_class][nr_class];
-			
+
 			int k=0;
 			for(i=0;i<nr_class;i++)
 				for(int j=i+1;j<nr_class;j++)
@@ -2398,7 +2398,7 @@ public class svm {
 					prob_max_idx = i;
 			return model.label[prob_max_idx];
 		}
-		else 
+		else
 			return svm_predict(model, x);
 	}
 
@@ -2437,14 +2437,14 @@ public class svm {
 		int l = model.l;
 		fp.writeBytes("nr_class "+nr_class+"\n");
 		fp.writeBytes("total_sv "+l+"\n");
-	
+
 		{
 			fp.writeBytes("rho");
 			for(int i=0;i<nr_class*(nr_class-1)/2;i++)
 				fp.writeBytes(" "+model.rho[i]);
 			fp.writeBytes("\n");
 		}
-	
+
 		if(model.label != null)
 		{
 			fp.writeBytes("label");
@@ -2460,7 +2460,7 @@ public class svm {
 				fp.writeBytes(" "+model.probA[i]);
 			fp.writeBytes("\n");
 		}
-		if(model.probB != null) 
+		if(model.probB != null)
 		{
 			fp.writeBytes("probB");
 			for(int i=0;i<nr_class*(nr_class-1)/2;i++)
@@ -2488,7 +2488,7 @@ public class svm {
 			svm_node[] p = SV[i];
 			if(param.kernel_type == svm_parameter.PRECOMPUTED)
 				fp.writeBytes("0:"+(int)(p[0].value));
-			else	
+			else
 				for(int j=0;j<p.length;j++)
 					fp.writeBytes(p[j].index+":"+p[j].value+" ");
 			fp.writeBytes("\n");
@@ -2588,7 +2588,7 @@ public class svm {
 				model.label = new int[n];
 				StringTokenizer st = new StringTokenizer(arg);
 				for(int i=0;i<n;i++)
-					model.label[i] = atoi(st.nextToken());					
+					model.label[i] = atoi(st.nextToken());
 			}
 			else if(cmd.startsWith("probA"))
 			{
@@ -2596,7 +2596,7 @@ public class svm {
 				model.probA = new double[n];
 				StringTokenizer st = new StringTokenizer(arg);
 				for(int i=0;i<n;i++)
-					model.probA[i] = atof(st.nextToken());					
+					model.probA[i] = atof(st.nextToken());
 			}
 			else if(cmd.startsWith("probB"))
 			{
@@ -2604,7 +2604,7 @@ public class svm {
 				model.probB = new double[n];
 				StringTokenizer st = new StringTokenizer(arg);
 				for(int i=0;i<n;i++)
-					model.probB[i] = atof(st.nextToken());					
+					model.probB[i] = atof(st.nextToken());
 			}
 			else if(cmd.startsWith("nr_sv"))
 			{
@@ -2666,7 +2666,7 @@ public class svm {
 		return "unknown svm type";
 
 		// kernel_type, degree
-	
+
 		int kernel_type = param.kernel_type;
 		if(kernel_type != svm_parameter.LINEAR &&
 		   kernel_type != svm_parameter.POLY &&
@@ -2716,9 +2716,9 @@ public class svm {
 		if(param.probability == 1 &&
 		   svm_type == svm_parameter.ONE_CLASS)
 			return "one-class SVM probability output not supported yet";
-		
+
 		// check whether nu-svc is feasible
-	
+
 		if(svm_type == svm_parameter.NU_SVC)
 		{
 			int l = prob.l;
@@ -2747,7 +2747,7 @@ public class svm {
 						int[] new_data = new int[max_nr_class];
 						System.arraycopy(label,0,new_data,0,label.length);
 						label = new_data;
-						
+
 						new_data = new int[max_nr_class];
 						System.arraycopy(count,0,new_data,0,count.length);
 						count = new_data;
@@ -2788,7 +2788,7 @@ public class svm {
 	{
 		if (print_func == null)
 			svm_print_string = svm_print_stdout;
-		else 
+		else
 			svm_print_string = print_func;
 	}
 }
