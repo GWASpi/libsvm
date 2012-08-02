@@ -24,6 +24,7 @@ class svm_train
 
 	private static svm_print_interface svm_print_null = new svm_print_interface()
 	{
+		@Override
 		public void print(String s) {}
 	};
 
