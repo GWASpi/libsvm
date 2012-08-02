@@ -34,18 +34,18 @@ import libsvm.svm_problem;
 
 public class svm_toy extends Applet
 {
-	static final String DEFAULT_PARAM="-t 2 -c 100";
-	int XLEN;
-	int YLEN;
+	private static final String DEFAULT_PARAM="-t 2 -c 100";
+	private int XLEN;
+	private int YLEN;
 
 	// off-screen buffer
 
-	Image buffer;
-	Graphics buffer_gc;
+	private Image buffer;
+	private Graphics buffer_gc;
 
 	// pre-allocated colors
 
-	final static Color colors[] =
+	private static final Color colors[] =
 	{
 	  new Color(0,0,0),
 	  new Color(0,120,120),
@@ -56,7 +56,7 @@ public class svm_toy extends Applet
 	  new Color(200,0,200)
 	};
 
-	class point
+	private static class point
 	{
 		point(double x, double y, byte value)
 		{
@@ -68,8 +68,8 @@ public class svm_toy extends Applet
 		byte value;
 	}
 
-	List<point> point_list = new Vector<point>();
-	byte current_value = 1;
+	private List<point> point_list = new Vector<point>();
+	private byte current_value = 1;
 
 	@Override
 	public void init()
