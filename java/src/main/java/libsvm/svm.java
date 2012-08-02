@@ -9,12 +9,12 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-//
-// Kernel Cache
-//
-// l is the number of total data items
-// size is the cache size limit in bytes
-//
+/**
+ * Kernel Cache
+ *
+ * l is the number of total data items
+ * size is the cache size limit in bytes
+ */
 class Cache
 {
 	private static final long SIZE_OF_QFLOAT = 4;
@@ -59,10 +59,12 @@ class Cache
 		h.next.prev = h;
 	}
 
-	// request data [0,len)
-	// return some position p where [p,len) need to be filled
-	// (p >= len if nothing needs to be filled)
-	// java: simulate pointer using single-element array
+	/**
+	 * request data [0,len)
+	 * return some position p where [p,len) need to be filled
+	 * (p >= len if nothing needs to be filled)
+	 * java: simulate pointer using single-element array
+	 */
 	int get_data(int index, float[][] data, int len)
 	{
 		head_t h = head[index];
@@ -146,13 +148,13 @@ class Cache
 	}
 }
 
-//
-// Kernel evaluation
-//
-// the static method k_function is for doing single kernel evaluation
-// the constructor of Kernel prepares to calculate the l*l kernel matrix
-// the member function get_Q is for getting one column from the Q Matrix
-//
+/**
+ * Kernel evaluation
+ *
+ * the static method k_function is for doing single kernel evaluation
+ * the constructor of Kernel prepares to calculate the l*l kernel matrix
+ * the member function get_Q is for getting one column from the Q Matrix
+ */
 abstract class QMatrix {
 	abstract float[] get_Q(int column, int len);
 	abstract double[] get_QD();
@@ -317,24 +319,25 @@ abstract class Kernel extends QMatrix {
 	}
 }
 
-// An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
-// Solves:
-//
-//	min 0.5(\alpha^T Q \alpha) + p^T \alpha
-//
-//		y^T \alpha = \delta
-//		y_i = +1 or -1
-//		0 <= alpha_i <= Cp for y_i = 1
-//		0 <= alpha_i <= Cn for y_i = -1
-//
-// Given:
-//
-//	Q, p, y, Cp, Cn, and an initial feasible point \alpha
-//	l is the size of vectors and matrices
-//	eps is the stopping tolerance
-//
-// solution will be put in \alpha, objective value will be put in obj
-//
+/**
+ * An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
+ * Solves:
+ *
+ *	min 0.5(\alpha^T Q \alpha) + p^T \alpha
+ *
+ *		y^T \alpha = \delta
+ *		y_i = +1 or -1
+ *		0 <= alpha_i <= Cp for y_i = 1
+ *		0 <= alpha_i <= Cn for y_i = -1
+ *
+ * Given:
+ *
+ *	Q, p, y, Cp, Cn, and an initial feasible point \alpha
+ *	l is the size of vectors and matrices
+ *	eps is the stopping tolerance
+ *
+ * solution will be put in \alpha, objective value will be put in obj
+ */
 class Solver {
 
 	protected static final double TAU = 1e-12;
@@ -955,11 +958,11 @@ class Solver {
 
 }
 
-//
-// Solver for nu-svm classification and regression
-//
-// additional constraint: e^T \alpha = constant
-//
+/**
+ * Solver for nu-svm classification and regression
+ *
+ * additional constraint: e^T \alpha = constant
+ */
 final class Solver_NU extends Solver
 {
 	private SolutionInfo si;
@@ -978,7 +981,7 @@ final class Solver_NU extends Solver
 		// return i,j such that y_i = y_j and
 		// i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
 		// j: minimizes the decrease of obj value
-		//    (if quadratic coefficeint <= 0, replace it with TAU)
+		//    (if quadratic coefficeint <= 0, replace it with tau)
 		//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
 
 		double Gmaxp = -INF;
@@ -1037,7 +1040,7 @@ final class Solver_NU extends Solver
 						if (quad_coef > 0)
 							obj_diff = -(grad_diff*grad_diff)/quad_coef;
 						else
-							obj_diff = -(grad_diff*grad_diff)/TAU;
+							obj_diff = -(grad_diff*grad_diff)/1e-12;
 
 						if (obj_diff <= obj_diff_min)
 						{
@@ -1061,7 +1064,7 @@ final class Solver_NU extends Solver
 						if (quad_coef > 0)
 							obj_diff = -(grad_diff*grad_diff)/quad_coef;
 						else
-							obj_diff = -(grad_diff*grad_diff)/TAU;
+							obj_diff = -(grad_diff*grad_diff)/1e-12;
 
 						if (obj_diff <= obj_diff_min)
 						{
@@ -1208,9 +1211,9 @@ final class Solver_NU extends Solver
 	}
 }
 
-//
-// Q matrices for various formulations
-//
+/**
+ * Q matrices for various formulations
+ */
 class SVC_Q extends Kernel
 {
 	private final byte[] y;
@@ -1379,10 +1382,11 @@ class SVR_Q extends Kernel
 	}
 }
 
-public class svm {
-	//
-	// construct and solve various formulations
-	//
+/**
+ * construct and solve various formulations
+ */
+public class svm
+{
 	public static final int LIBSVM_VERSION=312;
 	public static final Random rand = new Random();
 
@@ -1579,9 +1583,6 @@ public class svm {
 			alpha[i] = alpha2[i] - alpha2[i+l];
 	}
 
-	//
-	// decision_function
-	//
 	static class decision_function
 	{
 		double[] alpha;
@@ -1645,7 +1646,9 @@ public class svm {
 		return f;
 	}
 
-	// Platt's binary SVM Probablistic Output: an improvement from Lin et al.
+	/**
+	 * Platt's binary SVM Probablistic Output: an improvement from Lin et al.
+	 */
 	private static void sigmoid_train(int l, double[] dec_values, double[] labels,
 				  double[] probAB)
 	{
@@ -1768,7 +1771,9 @@ public class svm {
 			return 1.0/(1+Math.exp(fApB)) ;
 	}
 
-	// Method 2 from the multiclass_prob paper by Wu, Lin, and Weng
+	/**
+	 * Method 2 from the multiclass_prob paper by Wu, Lin, and Weng
+	 */
 	private static void multiclass_probability(int k, double[][] r, double[] p)
 	{
 		int t,j;
@@ -1828,7 +1833,9 @@ public class svm {
 			svm.info("Exceeds max_iter in multiclass_prob\n");
 	}
 
-	// Cross-validation decision values for probability estimates
+	/**
+	 * Cross-validation decision values for probability estimates
+	 */
 	private static void svm_binary_svc_probability(svm_problem prob, svm_parameter param, double Cp, double Cn, double[] probAB)
 	{
 		int i;
@@ -1913,7 +1920,9 @@ public class svm {
 		sigmoid_train(prob.l,dec_values,prob.y,probAB);
 	}
 
-	// Return parameter of a Laplace distribution
+	/**
+	 * Return parameter of a Laplace distribution
+	 */
 	private static double svm_svr_probability(svm_problem prob, svm_parameter param)
 	{
 		int i;
@@ -1943,8 +1952,10 @@ public class svm {
 		return mae;
 	}
 
-	// label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
-	// perm, length l, must be allocated before calling this subroutine
+	/**
+	 * label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
+	 * perm, length l, must be allocated before calling this subroutine
+	 */
 	private static void svm_group_classes(svm_problem prob, int[] nr_class_ret, int[][] label_ret, int[][] start_ret, int[][] count_ret, int[] perm)
 	{
 		int l = prob.l;
@@ -2008,6 +2019,7 @@ public class svm {
 	//
 	// Interface functions
 	//
+
 	public static svm_model svm_train(svm_problem prob, svm_parameter param)
 	{
 		svm_model model = new svm_model();
@@ -2237,7 +2249,9 @@ public class svm {
 		return model;
 	}
 
-	// Stratified cross validation
+	/**
+	 * Stratified cross validation
+	 */
 	public static void svm_cross_validation(svm_problem prob, svm_parameter param, int nr_fold, double[] target)
 	{
 		int i;
