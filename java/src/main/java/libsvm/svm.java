@@ -1,7 +1,3 @@
-define(`swap',`do {$1 _=$2; $2=$3; $3=_;} while(false)')
-define(`Qfloat',`float')
-define(`SIZE_OF_QFLOAT',4)
-define(`TAU',1e-12)
 package libsvm;
 
 import java.io.BufferedOutputStream;
@@ -21,12 +17,14 @@ import java.util.StringTokenizer;
 //
 class Cache
 {
+	private static final long SIZE_OF_QFLOAT = 4;
+
 	private final int l;
 	private long size;
 	private final class head_t
 	{
 		head_t prev, next;	// a cicular list
-		Qfloat[] data;
+		float[] data;
 		int len;		// data[0,len) is cached in this entry
 	}
 	private final head_t[] head;
@@ -65,7 +63,7 @@ class Cache
 	// return some position p where [p,len) need to be filled
 	// (p >= len if nothing needs to be filled)
 	// java: simulate pointer using single-element array
-	int get_data(int index, Qfloat[][] data, int len)
+	int get_data(int index, float[][] data, int len)
 	{
 		head_t h = head[index];
 		if(h.len > 0) lru_delete(h);
@@ -84,11 +82,15 @@ class Cache
 			}
 
 			// allocate new space
-			Qfloat[] new_data = new Qfloat[len];
+			float[] new_data = new float[len];
 			if(h.data != null) System.arraycopy(h.data,0,new_data,0,h.len);
 			h.data = new_data;
 			size -= more;
-			swap(int,h.len,len);
+			{ // swap(int, h.len, len);
+				int tmp = h.len;
+				h.len = len;
+				len = tmp;
+			}
 		}
 
 		lru_insert(h);
@@ -102,18 +104,35 @@ class Cache
 
 		if(head[i].len > 0) lru_delete(head[i]);
 		if(head[j].len > 0) lru_delete(head[j]);
-		swap(Qfloat[],head[i].data,head[j].data);
-		swap(int,head[i].len,head[j].len);
+		{ // swap(float[], head[i].data, head[j].data);
+			float[] tmp = head[i].data;
+			head[i].data = head[j].data;
+			head[j].data = tmp;
+		}
+		{ // swap(int, head[i].len, head[j].len);
+			int tmp = head[i].len;
+			head[i].len = head[j].len;
+			head[j].len = tmp;
+		}
 		if(head[i].len > 0) lru_insert(head[i]);
 		if(head[j].len > 0) lru_insert(head[j]);
 
-		if(i>j) swap(int,i,j);
+		if(i>j)
+		{ // swap(int, i, j);
+			int tmp = i;
+			i = j;
+			j = tmp;
+		}
 		for(head_t h = lru_head.next; h!=lru_head; h=h.next)
 		{
 			if(h.len > i)
 			{
 				if(h.len > j)
-					swap(Qfloat,h.data[i],h.data[j]);
+				{ // swap(float, h.data[i], h.data[j]);
+					float tmp = h.data[i];
+					h.data[i] = h.data[j];
+					h.data[j] = tmp;
+				}
 				else
 				{
 					// give up
@@ -135,7 +154,7 @@ class Cache
 // the member function get_Q is for getting one column from the Q Matrix
 //
 abstract class QMatrix {
-	abstract Qfloat[] get_Q(int column, int len);
+	abstract float[] get_Q(int column, int len);
 	abstract double[] get_QD();
 	abstract void swap_index(int i, int j);
 };
@@ -150,13 +169,22 @@ abstract class Kernel extends QMatrix {
 	private final double gamma;
 	private final double coef0;
 
-	abstract Qfloat[] get_Q(int column, int len);
+	abstract float[] get_Q(int column, int len);
 	abstract double[] get_QD();
 
 	void swap_index(int i, int j)
 	{
-		swap(svm_node[],x[i],x[j]);
-		if(x_square != null) swap(double,x_square[i],x_square[j]);
+		{ // swap(svm_node[], x[i], x[j]);
+			svm_node[] tmp = x[i];
+			x[i] = x[j];
+			x[j] = tmp;
+		}
+		if(x_square != null)
+		{ // swap(double, x_square[i], x_square[j]);
+			double tmp = x_square[i];
+			x_square[i] = x_square[j];
+			x_square[j] = tmp;
+		}
 	}
 
 	private static double powi(double base, int times)
@@ -308,6 +336,9 @@ abstract class Kernel extends QMatrix {
 // solution will be put in \alpha, objective value will be put in obj
 //
 class Solver {
+
+	protected static final double TAU = 1e-12;
+
 	int active_size;
 	byte[] y;
 	double[] G;		// gradient of objective function
@@ -357,13 +388,41 @@ class Solver {
 	void swap_index(int i, int j)
 	{
 		Q.swap_index(i,j);
-		swap(byte,	y[i],y[j]);
-		swap(double,	G[i],G[j]);
-		swap(byte,	alpha_status[i],alpha_status[j]);
-		swap(double,	alpha[i],alpha[j]);
-		swap(double,	p[i],p[j]);
-		swap(int,	active_set[i],active_set[j]);
-		swap(double,	G_bar[i],G_bar[j]);
+		{ // swap(byte, y[i], y[j]);
+			byte tmp = y[i];
+			y[i] = y[j];
+			y[j] = tmp;
+		}
+		{ // swap(double, G[i], G[j]);
+			double tmp = G[i];
+			G[i] = G[j];
+			G[j] = tmp;
+		}
+		{ // swap(byte, alpha_status[i], alpha_status[j]);
+			byte tmp = alpha_status[i];
+			alpha_status[i] = alpha_status[j];
+			alpha_status[j] = tmp;
+		}
+		{ // swap(double, alpha[i], alpha[j]);
+			double tmp = alpha[i];
+			alpha[i] = alpha[j];
+			alpha[j] = tmp;
+		}
+		{ // swap(double, p[i], p[j]);
+			double tmp = p[i];
+			p[i] = p[j];
+			p[j] = tmp;
+		}
+		{ // swap(int, active_set[i], active_set[j]);
+			int tmp = active_set[i];
+			active_set[i] = active_set[j];
+			active_set[j] = tmp;
+		}
+		{ // swap(double, G_bar[i], G_bar[j]);
+			double tmp = G_bar[i];
+			G_bar[i] = G_bar[j];
+			G_bar[j] = tmp;
+		}
 	}
 
 	void reconstruct_gradient()
@@ -389,7 +448,7 @@ class Solver {
 		{
 			for(i=active_size;i<l;i++)
 			{
-				Qfloat[] Q_i = Q.get_Q(i,active_size);
+				float[] Q_i = Q.get_Q(i,active_size);
 				for(j=0;j<active_size;j++)
 					if(is_free(j))
 						G[i] += alpha[j] * Q_i[j];
@@ -400,7 +459,7 @@ class Solver {
 			for(i=0;i<active_size;i++)
 				if(is_free(i))
 				{
-					Qfloat[] Q_i = Q.get_Q(i,l);
+					float[] Q_i = Q.get_Q(i,l);
 					double alpha_i = alpha[i];
 					for(j=active_size;j<l;j++)
 						G[j] += alpha_i * Q_i[j];
@@ -450,7 +509,7 @@ class Solver {
 			for(i=0;i<l;i++)
 				if(!is_lower_bound(i))
 				{
-					Qfloat[] Q_i = Q.get_Q(i,l);
+					float[] Q_i = Q.get_Q(i,l);
 					double alpha_i = alpha[i];
 					int j;
 					for(j=0;j<l;j++)
@@ -499,8 +558,8 @@ class Solver {
 
 			// update alpha[i] and alpha[j], handle bounds carefully
 
-			Qfloat[] Q_i = Q.get_Q(i,active_size);
-			Qfloat[] Q_j = Q.get_Q(j,active_size);
+			float[] Q_i = Q.get_Q(i,active_size);
+			float[] Q_j = Q.get_Q(j,active_size);
 
 			double C_i = get_C(i);
 			double C_j = get_C(j);
@@ -682,7 +741,7 @@ class Solver {
 		// return i,j such that
 		// i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
 		// j: mimimizes the decrease of obj value
-		//    (if quadratic coefficeint <= 0, replace it with tau)
+		//    (if quadratic coefficeint <= 0, replace it with TAU)
 		//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
 
 		double Gmax = -INF;
@@ -712,7 +771,7 @@ class Solver {
 			}
 
 		int i = Gmax_idx;
-		Qfloat[] Q_i = null;
+		float[] Q_i = null;
 		if(i != -1) // null Q_i not accessed: Gmax=-INF if i=-1
 			Q_i = Q.get_Q(i,active_size);
 
@@ -919,7 +978,7 @@ final class Solver_NU extends Solver
 		// return i,j such that y_i = y_j and
 		// i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
 		// j: minimizes the decrease of obj value
-		//    (if quadratic coefficeint <= 0, replace it with tau)
+		//    (if quadratic coefficeint <= 0, replace it with TAU)
 		//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
 
 		double Gmaxp = -INF;
@@ -955,8 +1014,8 @@ final class Solver_NU extends Solver
 
 		int ip = Gmaxp_idx;
 		int in = Gmaxn_idx;
-		Qfloat[] Q_ip = null;
-		Qfloat[] Q_in = null;
+		float[] Q_ip = null;
+		float[] Q_in = null;
 		if(ip != -1) // null Q_ip not accessed: Gmaxp=-INF if ip=-1
 			Q_ip = Q.get_Q(ip,active_size);
 		if(in != -1)
@@ -1168,14 +1227,14 @@ class SVC_Q extends Kernel
 			QD[i] = kernel_function(i,i);
 	}
 
-	Qfloat[] get_Q(int i, int len)
+	float[] get_Q(int i, int len)
 	{
-		Qfloat[][] data = new Qfloat[1][];
+		float[][] data = new float[1][];
 		int start, j;
 		if((start = cache.get_data(i,data,len)) < len)
 		{
 			for(j=start;j<len;j++)
-				data[0][j] = (Qfloat)(y[i]*y[j]*kernel_function(i,j));
+				data[0][j] = (float)(y[i]*y[j]*kernel_function(i,j));
 		}
 		return data[0];
 	}
@@ -1189,8 +1248,16 @@ class SVC_Q extends Kernel
 	{
 		cache.swap_index(i,j);
 		super.swap_index(i,j);
-		swap(byte,y[i],y[j]);
-		swap(double,QD[i],QD[j]);
+		{ // swap(byte, y[i], y[j]);
+			byte tmp = y[i];
+			y[i] = y[j];
+			y[j] = tmp;
+		}
+		{ // swap(double, QD[i], QD[j]);
+			double tmp = QD[i];
+			QD[i] = QD[j];
+			QD[j] = tmp;
+		}
 	}
 }
 
@@ -1208,14 +1275,14 @@ class ONE_CLASS_Q extends Kernel
 			QD[i] = kernel_function(i,i);
 	}
 
-	Qfloat[] get_Q(int i, int len)
+	float[] get_Q(int i, int len)
 	{
-		Qfloat[][] data = new Qfloat[1][];
+		float[][] data = new float[1][];
 		int start, j;
 		if((start = cache.get_data(i,data,len)) < len)
 		{
 			for(j=start;j<len;j++)
-				data[0][j] = (Qfloat)kernel_function(i,j);
+				data[0][j] = (float)kernel_function(i,j);
 		}
 		return data[0];
 	}
@@ -1229,7 +1296,11 @@ class ONE_CLASS_Q extends Kernel
 	{
 		cache.swap_index(i,j);
 		super.swap_index(i,j);
-		swap(double,QD[i],QD[j]);
+		{ // swap(double, QD[i], QD[j]);
+			double tmp = QD[i];
+			QD[i] = QD[j];
+			QD[j] = tmp;
+		}
 	}
 }
 
@@ -1240,7 +1311,7 @@ class SVR_Q extends Kernel
 	private final byte[] sign;
 	private final int[] index;
 	private int next_buffer;
-	private Qfloat[][] buffer;
+	private float[][] buffer;
 	private final double[] QD;
 
 	SVR_Q(svm_problem prob, svm_parameter param)
@@ -1260,33 +1331,45 @@ class SVR_Q extends Kernel
 			QD[k] = kernel_function(k,k);
 			QD[k+l] = QD[k];
 		}
-		buffer = new Qfloat[2][2*l];
+		buffer = new float[2][2*l];
 		next_buffer = 0;
 	}
 
 	void swap_index(int i, int j)
 	{
-		swap(byte,sign[i],sign[j]);
-		swap(int,index[i],index[j]);
-		swap(double,QD[i],QD[j]);
+		{ // swap(byte, sign[i], sign[j]);
+			byte tmp = sign[i];
+			sign[i] = sign[j];
+			sign[j] = tmp;
+		}
+		{ // swap(int, index[i], index[j]);
+			int tmp = index[i];
+			index[i] = index[j];
+			index[j] = tmp;
+		}
+		{ // swap(double, QD[i], QD[j]);
+			double tmp = QD[i];
+			QD[i] = QD[j];
+			QD[j] = tmp;
+		}
 	}
 
-	Qfloat[] get_Q(int i, int len)
+	float[] get_Q(int i, int len)
 	{
-		Qfloat[][] data = new Qfloat[1][];
+		float[][] data = new float[1][];
 		int j, real_i = index[i];
 		if(cache.get_data(real_i,data,l) < l)
 		{
 			for(j=0;j<l;j++)
-				data[0][j] = (Qfloat)kernel_function(real_i,j);
+				data[0][j] = (float)kernel_function(real_i,j);
 		}
 
 		// reorder and copy
-		Qfloat buf[] = buffer[next_buffer];
+		float buf[] = buffer[next_buffer];
 		next_buffer = 1 - next_buffer;
 		byte si = sign[i];
 		for(j=0;j<len;j++)
-			buf[j] = (Qfloat) si * sign[j] * data[0][index[j]];
+			buf[j] = (float) si * sign[j] * data[0][index[j]];
 		return buf;
 	}
 
@@ -1758,7 +1841,11 @@ public class svm {
 		for(i=0;i<prob.l;i++)
 		{
 			int j = i+rand.nextInt(prob.l-i);
-			swap(int,perm[i],perm[j]);
+			{ // swap(int, perm[i], perm[j]);
+				int tmp = perm[i];
+				perm[i] = perm[j];
+				perm[j] = tmp;
+			}
 		}
 		for(i=0;i<nr_fold;i++)
 		{
@@ -2184,7 +2271,11 @@ public class svm {
 				for(i=0;i<count[c];i++)
 				{
 					int j = i+rand.nextInt(count[c]-i);
-					swap(int,index[start[c]+j],index[start[c]+i]);
+					{ // swap(int, index[start[c]+j], index[start[c]+i]);
+						int tmp = index[start[c]+j];
+						index[start[c]+j] = index[start[c]+i];
+						index[start[c]+i] = tmp;
+					}
 				}
 			for(i=0;i<nr_fold;i++)
 			{
@@ -2216,7 +2307,11 @@ public class svm {
 			for(i=0;i<l;i++)
 			{
 				int j = i+rand.nextInt(l-i);
-				swap(int,perm[i],perm[j]);
+				{ // swap(int, perm[i], perm[j]);
+					int tmp = perm[i];
+					perm[i] = perm[j];
+					perm[j] = tmp;
+				}
 			}
 			for(i=0;i<=nr_fold;i++)
 				fold_start[i]=i*l/nr_fold;
