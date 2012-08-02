@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import libsvm.svm;
@@ -272,8 +273,8 @@ class svm_train
 	private void read_problem() throws IOException
 	{
 		BufferedReader fp = new BufferedReader(new FileReader(input_file_name));
-		Vector<Double> vy = new Vector<Double>();
-		Vector<svm_node[]> vx = new Vector<svm_node[]>();
+		List<Double> vy = new Vector<Double>();
+		List<svm_node[]> vx = new Vector<svm_node[]>();
 		int max_index = 0;
 
 		while(true)
@@ -283,7 +284,7 @@ class svm_train
 
 			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
 
-			vy.addElement(atof(st.nextToken()));
+			vy.add(atof(st.nextToken()));
 			int m = st.countTokens()/2;
 			svm_node[] x = new svm_node[m];
 			for(int j=0;j<m;j++)
@@ -293,17 +294,17 @@ class svm_train
 				x[j].value = atof(st.nextToken());
 			}
 			if(m>0) max_index = Math.max(max_index, x[m-1].index);
-			vx.addElement(x);
+			vx.add(x);
 		}
 
 		prob = new svm_problem();
 		prob.l = vy.size();
 		prob.x = new svm_node[prob.l][];
 		for(int i=0;i<prob.l;i++)
-			prob.x[i] = vx.elementAt(i);
+			prob.x[i] = vx.get(i);
 		prob.y = new double[prob.l];
 		for(int i=0;i<prob.l;i++)
-			prob.y[i] = vy.elementAt(i);
+			prob.y[i] = vy.get(i);
 
 		if(param.gamma == 0 && max_index > 0)
 			param.gamma = 1.0/max_index;
