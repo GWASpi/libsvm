@@ -180,9 +180,12 @@ abstract class Kernel extends QMatrix {
 	private final double gamma;
 	private final double coef0;
 
+	@Override
 	abstract float[] get_Q(int column, int len);
+	@Override
 	abstract double[] get_QD();
 
+	@Override
 	void swap_index(int i, int j)
 	{
 		{ // swap(svm_node[], x[i], x[j]);
@@ -242,7 +245,7 @@ abstract class Kernel extends QMatrix {
 		this.gamma = param.gamma;
 		this.coef0 = param.coef0;
 
-		x = (svm_node[][])x_.clone();
+		x = x_.clone();
 
 		// extract the sample serial numbers from x
 		if(kernel_type == svm_parameter.PRECOMPUTED)
@@ -347,12 +350,12 @@ abstract class Kernel extends QMatrix {
  * An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
  * Solves:
  *
- *	min 0.5(\alpha^T Q \alpha) + p^T \alpha
+ * <code>min 0.5(\alpha^T Q \alpha) + p^T \alpha
  *
  *		y^T \alpha = \delta
  *		y_i = +1 or -1
  *		0 <= alpha_i <= Cp for y_i = 1
- *		0 <= alpha_i <= Cn for y_i = -1
+ *		0 <= alpha_i <= Cn for y_i = -1</code>
  *
  * Given:
  *
@@ -366,25 +369,25 @@ class Solver {
 
 	protected static final double TAU = 1e-12;
 
-	int active_size;
-	byte[] y;
-	double[] G;		// gradient of objective function
-	static final byte LOWER_BOUND = 0;
-	static final byte UPPER_BOUND = 1;
-	static final byte FREE = 2;
-	byte[] alpha_status;	// LOWER_BOUND, UPPER_BOUND, FREE
-	double[] alpha;
-	QMatrix Q;
-	double[] QD;
-	double eps;
-	double Cp,Cn;
-	double[] p;
-	int[] active_set;
-	double[] G_bar;		// gradient, if we treat free variables as 0
-	int l;
-	boolean unshrink;	// XXX
+	protected int active_size;
+	protected byte[] y;
+	protected double[] G;		// gradient of objective function
+	protected static final byte LOWER_BOUND = 0;
+	protected static final byte UPPER_BOUND = 1;
+	protected static final byte FREE = 2;
+	protected byte[] alpha_status;	// LOWER_BOUND, UPPER_BOUND, FREE
+	protected double[] alpha;
+	protected QMatrix Q;
+	protected double[] QD;
+	protected double eps;
+	protected double Cp,Cn;
+	protected double[] p;
+	protected int[] active_set;
+	protected double[] G_bar;		// gradient, if we treat free variables as 0
+	protected int l;
+	protected boolean unshrink;	// XXX
 
-	static final double INF = java.lang.Double.POSITIVE_INFINITY;
+	protected static final double INF = java.lang.Double.POSITIVE_INFINITY;
 
 	double get_C(int i)
 	{
@@ -500,9 +503,9 @@ class Solver {
 		this.l = l;
 		this.Q = Q;
 		QD = Q.get_QD();
-		p = (double[])p_.clone();
-		y = (byte[])y_.clone();
-		alpha = (double[])alpha_.clone();
+		p = p_.clone();
+		y = y_.clone();
+		alpha = alpha_.clone();
 		this.Cp = Cp;
 		this.Cn = Cn;
 		this.eps = eps;
@@ -991,6 +994,7 @@ final class Solver_NU extends Solver
 {
 	private SolutionInfo si;
 
+	@Override
 	void Solve(int l, QMatrix Q, double[] p, byte[] y,
 		   double[] alpha, double Cp, double Cn, double eps,
 		   SolutionInfo si, int shrinking)
@@ -999,7 +1003,10 @@ final class Solver_NU extends Solver
 		super.Solve(l,Q,p,y,alpha,Cp,Cn,eps,si,shrinking);
 	}
 
-	// return 1 if already optimal, return 0 otherwise
+	/**
+	 * @return 1 if already optimal, 0 otherwise
+	 */
+	@Override
 	int select_working_set(int[] working_set)
 	{
 		// return i,j such that y_i = y_j and
@@ -1132,6 +1139,7 @@ final class Solver_NU extends Solver
 			return(false);
 	}
 
+	@Override
 	void do_shrinking()
 	{
 		double Gmax1 = -INF;	// max { -y_i * grad(f)_i | y_i = +1, i in I_up(\alpha) }
@@ -1184,6 +1192,7 @@ final class Solver_NU extends Solver
 			}
 	}
 
+	@Override
 	double calculate_rho()
 	{
 		int nr_free1 = 0,nr_free2 = 0;
@@ -1247,13 +1256,14 @@ class SVC_Q extends Kernel
 	SVC_Q(svm_problem prob, svm_parameter param, byte[] y_)
 	{
 		super(prob.l, prob.x, param);
-		y = (byte[])y_.clone();
+		y = y_.clone();
 		cache = new Cache(prob.l,(long)(param.cache_size*(1<<20)));
 		QD = new double[prob.l];
 		for(int i=0;i<prob.l;i++)
 			QD[i] = kernel_function(i,i);
 	}
 
+	@Override
 	float[] get_Q(int i, int len)
 	{
 		float[][] data = new float[1][];
@@ -1266,11 +1276,13 @@ class SVC_Q extends Kernel
 		return data[0];
 	}
 
+	@Override
 	double[] get_QD()
 	{
 		return QD;
 	}
 
+	@Override
 	void swap_index(int i, int j)
 	{
 		cache.swap_index(i,j);
@@ -1302,6 +1314,7 @@ class ONE_CLASS_Q extends Kernel
 			QD[i] = kernel_function(i,i);
 	}
 
+	@Override
 	float[] get_Q(int i, int len)
 	{
 		float[][] data = new float[1][];
@@ -1314,11 +1327,13 @@ class ONE_CLASS_Q extends Kernel
 		return data[0];
 	}
 
+	@Override
 	double[] get_QD()
 	{
 		return QD;
 	}
 
+	@Override
 	void swap_index(int i, int j)
 	{
 		cache.swap_index(i,j);
@@ -1362,6 +1377,7 @@ class SVR_Q extends Kernel
 		next_buffer = 0;
 	}
 
+	@Override
 	void swap_index(int i, int j)
 	{
 		{ // swap(byte, sign[i], sign[j]);
@@ -1381,6 +1397,7 @@ class SVR_Q extends Kernel
 		}
 	}
 
+	@Override
 	float[] get_Q(int i, int len)
 	{
 		float[][] data = new float[1][];
@@ -1400,6 +1417,7 @@ class SVR_Q extends Kernel
 		return buf;
 	}
 
+	@Override
 	double[] get_QD()
 	{
 		return QD;
@@ -1414,8 +1432,9 @@ public class svm
 	public static final int LIBSVM_VERSION=321; 
 	public static final Random rand = new Random();
 
-	private static svm_print_interface svm_print_stdout = new svm_print_interface()
+	private static final svm_print_interface svm_print_stdout = new svm_print_interface()
 	{
+		@Override
 		public void print(String s)
 		{
 			System.out.print(s);
@@ -1607,11 +1626,11 @@ public class svm
 			alpha[i] = alpha2[i] - alpha2[i+l];
 	}
 
-	static class decision_function
+	private static class decision_function
 	{
 		double[] alpha;
 		double rho;
-	};
+	}
 
 	static decision_function svm_train_one(
 		svm_problem prob, svm_parameter param,
@@ -1801,7 +1820,8 @@ public class svm
 	private static void multiclass_probability(int k, double[][] r, double[] p)
 	{
 		int t,j;
-		int iter = 0, max_iter=Math.max(100,k);
+		int iter;
+		int max_iter=Math.max(100,k);
 		double[][] Q=new double[k][k];
 		double[] Qp=new double[k];
 		double pQp, eps=0.005/k;
@@ -2432,8 +2452,7 @@ public class svm
 	public static void svm_get_labels(svm_model model, int[] label)
 	{
 		if (model.label != null)
-			for(int i=0;i<model.nr_class;i++)
-				label[i] = model.label[i];
+			System.arraycopy(model.label, 0, label, 0, model.nr_class);
 	}
 
 	public static void svm_get_sv_indices(svm_model model, int[] indices)

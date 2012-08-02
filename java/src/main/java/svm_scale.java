@@ -44,18 +44,19 @@ class svm_scale
 
 	private void output_target(double value)
 	{
+		double scaledValue = value;
 		if(y_scaling)
 		{
-			if(value == y_min)
-				value = y_lower;
-			else if(value == y_max)
-				value = y_upper;
+			if(scaledValue == y_min)
+				scaledValue = y_lower;
+			else if(scaledValue == y_max)
+				scaledValue = y_upper;
 			else
-				value = y_lower + (y_upper-y_lower) *
-				(value-y_min) / (y_max-y_min);
+				scaledValue = y_lower + (y_upper-y_lower) *
+				(scaledValue-y_min) / (y_max-y_min);
 		}
 
-		System.out.print(value + " ");
+		System.out.print(scaledValue + " ");
 	}
 
 	private void output(int index, double value)
@@ -64,18 +65,19 @@ class svm_scale
 		if(feature_max[index] == feature_min[index])
 			return;
 
-		if(value == feature_min[index])
-			value = lower;
-		else if(value == feature_max[index])
-			value = upper;
+		double scaledValue = value;
+		if(scaledValue == feature_min[index])
+			scaledValue = lower;
+		else if(scaledValue == feature_max[index])
+			scaledValue = upper;
 		else
-			value = lower + (upper-lower) *
-				(value-feature_min[index])/
+			scaledValue = lower + (upper-lower) *
+				(scaledValue-feature_min[index])/
 				(feature_max[index]-feature_min[index]);
 
-		if(value != 0)
+		if(scaledValue != 0)
 		{
-			System.out.print(index + ":" + value + " ");
+			System.out.print(index + ":" + scaledValue + " ");
 			new_num_nonzeros++;
 		}
 	}
@@ -163,7 +165,7 @@ class svm_scale
 			fp_restore.readLine();
 			fp_restore.readLine();
 
-			String restore_line = null;
+			String restore_line;
 			while((restore_line = fp_restore.readLine())!=null)
 			{
 				StringTokenizer st2 = new StringTokenizer(restore_line);
@@ -266,7 +268,7 @@ class svm_scale
 				StringTokenizer st = new StringTokenizer(fp_restore.readLine());
 				lower = Double.parseDouble(st.nextToken());
 				upper = Double.parseDouble(st.nextToken());
-				String restore_line = null;
+				String restore_line;
 				while((restore_line = fp_restore.readLine())!=null)
 				{
 					StringTokenizer st2 = new StringTokenizer(restore_line);
