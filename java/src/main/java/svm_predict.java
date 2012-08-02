@@ -16,26 +16,6 @@ import libsvm.svm_parameter;
 class svm_predict {
 	private static final Logger LOG = Logger.getLogger(svm_predict.class.getName());
 
-	private static svm_print_interface svm_print_null = new svm_print_interface()
-	{
-		public void print(String s) {}
-	};
-
-	private static svm_print_interface svm_print_stdout = new svm_print_interface()
-	{
-		public void print(String s)
-		{
-			System.out.print(s);
-		}
-	};
-
-	private static svm_print_interface svm_print_string = svm_print_stdout;
-
-	static void info(String s) 
-	{
-		svm_print_string.print(s);
-	}
-
 	private static double atof(String s)
 	{
 		return Double.valueOf(s).doubleValue();
@@ -151,7 +131,6 @@ class svm_predict {
 		svm_train.setupLogging();
 
 		int i, predict_probability=0;
-        	svm_print_string = svm_print_stdout;
 
 		try
 		{
@@ -166,7 +145,7 @@ class svm_predict {
 						predict_probability = atoi(argv[i]);
 						break;
 					case 'q':
-						svm_print_string = svm_print_null;
+						// FIXME turn off logging (except warnings and errors?)
 						i--;
 						break;
 					case '-':

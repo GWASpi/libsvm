@@ -47,6 +47,18 @@ abstract class Kernel extends QMatrix
 		}
 	}
 
+	private static double powi(double base, int times)
+	{
+		double tmp = base, ret = 1.0;
+
+		for(int t=times; t>0; t/=2)
+		{
+			if(t%2==1) ret*=tmp;
+			tmp = tmp * tmp;
+		}
+		return ret;
+	}
+
 	double kernel_function(int i, int j)
 	{
 		switch(kernel_type)
@@ -54,7 +66,7 @@ abstract class Kernel extends QMatrix
 			case svm_parameter.LINEAR:
 				return dot(x[i],x[j]);
 			case svm_parameter.POLY:
-				return Math.pow(gamma*dot(x[i],x[j])+coef0,degree);
+				return powi(gamma*dot(x[i],x[j])+coef0,degree);
 			case svm_parameter.RBF:
 				return Math.exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j])));
 			case svm_parameter.SIGMOID:
@@ -129,7 +141,7 @@ abstract class Kernel extends QMatrix
 			case svm_parameter.LINEAR:
 				return dot(x,y);
 			case svm_parameter.POLY:
-				return Math.pow(param.gamma*dot(x,y)+param.coef0,param.degree);
+				return powi(param.gamma*dot(x,y)+param.coef0,param.degree);
 			case svm_parameter.RBF:
 			{
 				double sum = 0;

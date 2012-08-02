@@ -519,7 +519,7 @@ class Solver
 			}
 		}
 
-		if(Gmax+Gmax2 < eps)
+		if(Gmax+Gmax2 < eps || Gmin_idx == -1)
 			return 1;
 
 		working_set[0] = Gmax_idx;

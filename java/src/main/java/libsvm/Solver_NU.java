@@ -122,7 +122,7 @@ final class Solver_NU extends Solver
 			}
 		}
 
-		if(Math.max(Gmaxp+Gmaxp2,Gmaxn+Gmaxn2) < eps)
+		if(Math.max(Gmaxp+Gmaxp2,Gmaxn+Gmaxn2) < eps || Gmin_idx == -1)
 			return 1;
 
 		if(y[Gmin_idx] == +1)
