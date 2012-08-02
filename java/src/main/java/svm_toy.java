@@ -23,6 +23,7 @@ import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import libsvm.svm;
@@ -67,7 +68,7 @@ public class svm_toy extends Applet
 		byte value;
 	}
 
-	Vector<point> point_list = new Vector<point>();
+	List<point> point_list = new Vector<point>();
 	byte current_value = 1;
 
 	@Override
@@ -152,7 +153,7 @@ public class svm_toy extends Applet
 
 	void clear_all()
 	{
-		point_list.removeAllElements();
+		point_list.clear();
 		if(buffer != null)
 		{
 			buffer_gc.setColor(colors[0]);
@@ -165,7 +166,7 @@ public class svm_toy extends Applet
 	{
 		int n = point_list.size();
 		for(int i=0;i<n;i++)
-			draw_point(point_list.elementAt(i));
+			draw_point(point_list.get(i));
 	}
 
 	void button_change_clicked()
@@ -297,7 +298,7 @@ public class svm_toy extends Applet
 			prob.x = new svm_node[prob.l][1];
 			for(int i=0;i<prob.l;i++)
 			{
-				point p = point_list.elementAt(i);
+				point p = point_list.get(i);
 				prob.x[i][0] = new svm_node();
 				prob.x[i][0].index = 1;
 				prob.x[i][0].value = p.x;
@@ -356,7 +357,7 @@ public class svm_toy extends Applet
 			prob.x = new svm_node [prob.l][2];
 			for(int i=0;i<prob.l;i++)
 			{
-				point p = point_list.elementAt(i);
+				point p = point_list.get(i);
 				prob.x[i][0] = new svm_node();
 				prob.x[i][0].index = 1;
 				prob.x[i][0].value = p.x;
@@ -418,7 +419,7 @@ public class svm_toy extends Applet
 			{
 				for(int i=0;i<n;i++)
 				{
-					point p = point_list.elementAt(i);
+					point p = point_list.get(i);
 					fp.writeBytes(p.y+" 1:"+p.x+"\n");
 				}
 			}
@@ -426,7 +427,7 @@ public class svm_toy extends Applet
 			{
 				for(int i=0;i<n;i++)
 				{
-					point p = point_list.elementAt(i);
+					point p = point_list.get(i);
 					fp.writeBytes(p.value+" 1:"+p.x+" 2:"+p.y+"\n");
 				}
 			}
@@ -454,14 +455,14 @@ public class svm_toy extends Applet
 					double x = atof(st.nextToken());
 					st.nextToken();
 					double y = atof(st.nextToken());
-					point_list.addElement(new point(x,y,value));
+					point_list.add(new point(x,y,value));
 				}
 				else if(st.countTokens() == 3)
 				{
 					double y = atof(st.nextToken());
 					st.nextToken();
 					double x = atof(st.nextToken());
-					point_list.addElement(new point(x,y,current_value));
+					point_list.add(new point(x,y,current_value));
 				}else
 					break;
 			}
@@ -479,7 +480,7 @@ public class svm_toy extends Applet
 			point p = new point((double)e.getX()/XLEN,
 					    (double)e.getY()/YLEN,
 					    current_value);
-			point_list.addElement(p);
+			point_list.add(p);
 			draw_point(p);
 		}
 	}
