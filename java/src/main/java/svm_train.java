@@ -266,8 +266,9 @@ class svm_train
 		}
 	}
 
-	// read in a problem (in svmlight format)
-
+	/**
+	 * read in a problem (in svm-light format)
+	 */
 	private void read_problem() throws IOException
 	{
 		BufferedReader fp = new BufferedReader(new FileReader(input_file_name));
