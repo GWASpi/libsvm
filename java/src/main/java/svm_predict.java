@@ -153,7 +153,7 @@ class svm_predict {
 		}
 		if(i>=argv.length-2)
 			exit_with_help();
-		try 
+		try
 		{
 			BufferedReader input = new BufferedReader(new FileReader(argv[i]));
 			DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(argv[i+2])));
@@ -181,12 +181,12 @@ class svm_predict {
 			predict(input,output,model,predict_probability);
 			input.close();
 			output.close();
-		} 
-		catch(FileNotFoundException e) 
+		}
+		catch(FileNotFoundException e)
 		{
 			exit_with_help();
 		}
-		catch(ArrayIndexOutOfBoundsException e) 
+		catch(ArrayIndexOutOfBoundsException e)
 		{
 			exit_with_help();
 		}
