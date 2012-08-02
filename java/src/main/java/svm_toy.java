@@ -70,6 +70,7 @@ public class svm_toy extends Applet
 	Vector<point> point_list = new Vector<point>();
 	byte current_value = 1;
 
+	@Override
 	public void init()
 	{
 		setSize(getSize());
@@ -469,6 +470,7 @@ public class svm_toy extends Applet
 		draw_all_points();
 	}
 
+	@Override
 	protected void processMouseEvent(MouseEvent e)
 	{
 		if(e.getID() == MouseEvent.MOUSE_PRESSED)
@@ -482,6 +484,7 @@ public class svm_toy extends Applet
 		}
 	}
 
+	@Override
 	public void paint(Graphics g)
 	{
 		// create buffer first time
@@ -494,9 +497,12 @@ public class svm_toy extends Applet
 		g.drawImage(buffer,0,0,this);
 	}
 
+	@Override
 	public Dimension getPreferredSize() { return new Dimension(XLEN,YLEN+50); }
 
+	@Override
 	public void setSize(Dimension d) { setSize(d.width,d.height); }
+	@Override
 	public void setSize(int w,int h) {
 		super.setSize(w,h);
 		XLEN = w;
@@ -516,6 +522,7 @@ class AppletFrame extends Frame
 	{
 		super(title);
 		this.addWindowListener(new WindowAdapter() {
+			@Override
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
 			}
