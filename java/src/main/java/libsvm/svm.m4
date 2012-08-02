@@ -4,8 +4,15 @@ define(`SIZE_OF_QFLOAT',4)
 define(`TAU',1e-12)
 changecom(`//',`')
 package libsvm;
-import java.io.*;
-import java.util.*;
+
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Random;
+import java.util.StringTokenizer;
 
 //
 // Kernel Cache
@@ -13,7 +20,8 @@ import java.util.*;
 // l is the number of total data items
 // size is the cache size limit in bytes
 //
-class Cache {
+class Cache
+{
 	private final int l;
 	private long size;
 	private final class head_t

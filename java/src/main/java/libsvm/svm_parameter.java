@@ -1,4 +1,5 @@
 package libsvm;
+
 public class svm_parameter implements Cloneable,java.io.Serializable
 {
 	/* svm_type */
@@ -43,5 +44,4 @@ public class svm_parameter implements Cloneable,java.io.Serializable
 			return null;
 		}
 	}
-
 }

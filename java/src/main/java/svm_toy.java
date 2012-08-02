@@ -1,12 +1,38 @@
-import libsvm.*;
-import java.applet.*;
-import java.awt.*;
-import java.util.*;
-import java.awt.event.*;
-import java.io.*;
+import java.applet.Applet;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FileDialog;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Image;
+import java.awt.Panel;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import libsvm.svm;
+import libsvm.svm_model;
+import libsvm.svm_node;
+import libsvm.svm_parameter;
+import libsvm.svm_problem;
 
-public class svm_toy extends Applet {
-
+public class svm_toy extends Applet
+{
 	static final String DEFAULT_PARAM="-t 2 -c 100";
 	int XLEN;
 	int YLEN;
@@ -29,7 +55,8 @@ public class svm_toy extends Applet {
 	  new Color(200,0,200)
 	};
 
-	class point {
+	class point
+	{
 		point(double x, double y, byte value)
 		{
 			this.x = x;
@@ -483,7 +510,8 @@ public class svm_toy extends Applet {
 	}
 }
 
-class AppletFrame extends Frame {
+class AppletFrame extends Frame
+{
 	AppletFrame(String title, Applet applet, int width, int height)
 	{
 		super(title);
