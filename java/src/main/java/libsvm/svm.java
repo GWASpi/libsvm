@@ -1445,7 +1445,6 @@ class SVR_Q extends Kernel
 public class svm
 {
 	private static final Logger LOG = Logger.getLogger(svm.class.getName());
-	public static final int LIBSVM_VERSION=312;
 	public static final Random rand = new Random();
 
 	private static final svm_print_interface svm_print_stdout = new svm_print_interface()
@@ -1462,6 +1461,44 @@ public class svm
 	static void info(String s)
 	{
 		svm_print_string.print(s);
+	}
+
+	/**
+	 * @see #getVersionNumber()
+	 * @return examples: "3.0", "3.1", "3.12-SNAPSHOT", "66.6"
+	 *   or "0.0", if the version is unknown,
+	 *   which happens when starting the project from anything else then a JAR
+	 */
+	public static String getVersion()
+	{
+		String version = svm.class.getPackage().getImplementationVersion();
+		if (version == null)
+		{
+			version = "0.0";
+		}
+		return version;
+	}
+
+	/**
+	 * Returns the same number like the LIBSVM_VERSION field
+	 * of the native library for release versions.
+	 * @see #getVersion()
+	 * @return examples: 310, 312, 312, 6660
+	 *   or 0, if the version is unknown
+	 */
+	public static int getVersionNumber()
+	{
+		String simpleVersion = getVersion().replaceAll("[^0-9.]", "");
+		// we want exactly one '.', for example: "3.1", "3.12" or "66.0"
+		assert simpleVersion.replaceAll("[^.]", "").length() == 1;
+		int versionNumber = Integer.parseInt(simpleVersion.substring(simpleVersion.indexOf('.') + 1));
+		if (versionNumber < 10)
+		{
+			// for example: 3.1 -> 3.10
+			versionNumber *= 10;
+		}
+		versionNumber += 100 * Integer.parseInt(simpleVersion.substring(0, simpleVersion.indexOf('.')));
+		return versionNumber;
 	}
 
 	private static void solve_c_svc(svm_problem prob, svm_parameter param,
