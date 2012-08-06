@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
@@ -34,6 +36,8 @@ import libsvm.svm_problem;
 
 public class svm_toy extends Applet
 {
+	private static final Logger LOG = Logger.getLogger(svm_toy.class.getName());
+
 	private static final String DEFAULT_PARAM="-t 2 -c 100";
 	private int XLEN;
 	private int YLEN;
@@ -220,7 +224,7 @@ public class svm_toy extends Applet
 			if(argv[i].charAt(0) != '-') break;
 			if(++i>=argv.length)
 			{
-				System.err.print("unknown option\n");
+				LOG.warning("unknown option");
 				break;
 			}
 			switch(argv[i-1].charAt(1))
@@ -279,7 +283,7 @@ public class svm_toy extends Applet
 					param.weight[param.nr_weight-1] = atof(argv[i]);
 					break;
 				default:
-					System.err.print("unknown option\n");
+					LOG.log(Level.WARNING, "unknown option \"{0}\"", argv[i-1].charAt(1));
 			}
 		}
 
@@ -432,7 +436,7 @@ public class svm_toy extends Applet
 				}
 			}
 			fp.close();
-		} catch (IOException e) { System.err.print(e); }
+		} catch (IOException e) { LOG.log(Level.SEVERE, "", e); }
 	}
 
 	void button_load_clicked()
@@ -467,7 +471,7 @@ public class svm_toy extends Applet
 					break;
 			}
 			fp.close();
-		} catch (IOException e) { System.err.print(e); }
+		} catch (IOException e) { LOG.log(Level.SEVERE, "", e); }
 		draw_all_points();
 	}
 
@@ -513,6 +517,8 @@ public class svm_toy extends Applet
 
 	public static void main(String[] argv)
 	{
+		svm_train.setupLogging();
+
 		new AppletFrame("svm_toy",new svm_toy(),500,500+50);
 	}
 }

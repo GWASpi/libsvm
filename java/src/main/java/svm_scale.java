@@ -5,9 +5,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Formatter;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class svm_scale
 {
+	private static final Logger LOG = Logger.getLogger(svm_predict.class.getName());
+
 	private String line = null;
 	private double lower = -1.0;
 	private double upper = 1.0;
@@ -24,15 +28,13 @@ class svm_scale
 
 	private static void exit_with_help()
 	{
-		System.out.print(
-		 "Usage: svm-scale [options] data_filename\n"
-		+"options:\n"
-		+"-l lower : x scaling lower limit (default -1)\n"
-		+"-u upper : x scaling upper limit (default +1)\n"
-		+"-y y_lower y_upper : y scaling limits (default: no y scaling)\n"
-		+"-s save_filename : save scaling parameters to save_filename\n"
-		+"-r restore_filename : restore scaling parameters from restore_filename\n"
-		);
+		LOG.info("Usage: svm-scale [options] data_filename");
+		LOG.info("options:");
+		LOG.info("-l lower : x scaling lower limit (default -1)");
+		LOG.info("-u upper : x scaling upper limit (default +1)");
+		LOG.info("-y y_lower y_upper : y scaling limits (default: no y scaling)");
+		LOG.info("-s save_filename : save scaling parameters to save_filename");
+		LOG.info("-r restore_filename : restore scaling parameters from restore_filename");
 		System.exit(1);
 	}
 
@@ -56,7 +58,7 @@ class svm_scale
 				(scaledValue-y_min) / (y_max-y_min);
 		}
 
-		System.out.print(scaledValue + " ");
+		LOG.log(Level.INFO, "{0} ", scaledValue);
 	}
 
 	private void output(int index, double value)
@@ -77,7 +79,7 @@ class svm_scale
 
 		if(scaledValue != 0)
 		{
-			System.out.print(index + ":" + scaledValue + " ");
+			LOG.log(Level.INFO, "{0}:{1} ", new Object[] {index, scaledValue});
 			new_num_nonzeros++;
 		}
 	}
@@ -114,19 +116,19 @@ class svm_scale
 				case 's': save_filename = argv[i];	break;
 				case 'r': restore_filename = argv[i];	break;
 				default:
-					  System.err.println("unknown option");
+					  LOG.severe("unknown option");
 					  exit_with_help();
 			}
 		}
 
 		if(!(upper > lower) || (y_scaling && !(y_upper > y_lower)))
 		{
-			System.err.println("inconsistent lower/upper specification");
+			LOG.severe("inconsistent lower/upper specification");
 			System.exit(1);
 		}
 		if(restore_filename != null && save_filename != null)
 		{
-			System.err.println("cannot use -r and -s simultaneously");
+			LOG.severe("cannot use -r and -s simultaneously");
 			System.exit(1);
 		}
 
@@ -137,7 +139,7 @@ class svm_scale
 		try {
 			fp = new BufferedReader(new FileReader(data_filename));
 		} catch (Exception e) {
-			System.err.println("can't open file " + data_filename);
+			LOG.log(Level.SEVERE, "can't open file " + data_filename, e);
 			System.exit(1);
 		}
 
@@ -153,7 +155,7 @@ class svm_scale
 				fp_restore = new BufferedReader(new FileReader(restore_filename));
 			}
 			catch (Exception e) {
-				System.err.println("can't open file " + restore_filename);
+				LOG.log(Level.SEVERE, "can't open file " + restore_filename, e);
 				System.exit(1);
 			}
 			if((c = fp_restore.read()) == 'y')
@@ -192,7 +194,7 @@ class svm_scale
 			feature_max = new double[(max_index+1)];
 			feature_min = new double[(max_index+1)];
 		} catch(OutOfMemoryError e) {
-			System.err.println("can't allocate enough memory");
+			LOG.log(Level.SEVERE, "can't allocate enough memory", e);
 			System.exit(1);
 		}
 
@@ -293,7 +295,7 @@ class svm_scale
 			try {
 				fp_save = new BufferedWriter(new FileWriter(save_filename));
 			} catch(IOException e) {
-				System.err.println("can't open file " + save_filename);
+				LOG.log(Level.SEVERE, "can't open file " + save_filename, e);
 				System.exit(1);
 			}
 
@@ -336,19 +338,22 @@ class svm_scale
 
 			for(i=next_index;i<= max_index;i++)
 				output(i, 0);
-			System.out.print("\n");
+			LOG.info("");
 		}
 		if (new_num_nonzeros > num_nonzeros)
-			System.err.print(
-			 "WARNING: original #nonzeros " + num_nonzeros+"\n"
-			+"         new      #nonzeros " + new_num_nonzeros+"\n"
-			+"Use -l 0 if many original feature values are zeros\n");
+		{
+			LOG.log(Level.WARNING, "original #nonzeros {0}", num_nonzeros);
+			LOG.log(Level.WARNING, "new      #nonzeros {0}", new_num_nonzeros);
+			LOG.log(Level.WARNING, "Use -l 0 if many original feature values are zeros");
+		}
 
 		fp.close();
 	}
 
 	public static void main(String argv[]) throws IOException
 	{
+		svm_train.setupLogging();
+
 		svm_scale s = new svm_scale();
 		s.run(argv);
 	}

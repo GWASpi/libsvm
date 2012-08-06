@@ -8,6 +8,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Random;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Kernel Cache
@@ -1429,6 +1431,7 @@ class SVR_Q extends Kernel
  */
 public class svm
 {
+	private static final Logger LOG = Logger.getLogger(svm.class.getName());
 	public static final int LIBSVM_VERSION=321; 
 	public static final Random rand = new Random();
 
@@ -1437,8 +1440,7 @@ public class svm
 		@Override
 		public void print(String s)
 		{
-			System.out.print(s);
-			System.out.flush();
+			LOG.info(s);
 		}
 	};
 
@@ -2165,7 +2167,7 @@ public class svm
 					if(param.weight_label[i] == label[j])
 						break;
 				if(j == nr_class)
-					System.err.print("WARNING: class label "+param.weight_label[i]+" specified in weight is not found\n");
+					LOG.log(Level.WARNING, "class label {0} specified in weight is not found", param.weight_label[i]);
 				else
 					weighted_C[j] *= param.weight[i];
 			}
@@ -2474,7 +2476,7 @@ public class svm
 		return model.probA[0];
 		else
 		{
-			System.err.print("Model doesn't contain information for SVR probability inference\n");
+			LOG.severe("Model doesn't contain information for SVR probability inference");
 			return 0;
 		}
 	}
