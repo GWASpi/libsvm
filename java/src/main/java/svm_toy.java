@@ -23,9 +23,9 @@ import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import libsvm.svm;
@@ -72,7 +72,7 @@ public class svm_toy extends Applet
 		byte value;
 	}
 
-	private List<point> point_list = new Vector<point>();
+	private List<point> point_list = new ArrayList<point>();
 	private byte current_value = 1;
 
 	@Override
