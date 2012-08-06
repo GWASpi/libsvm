@@ -24,11 +24,15 @@ class svm_train
 {
 	private static final Logger LOG = Logger.getLogger(svm_train.class.getName());
 
-	private svm_parameter param;		// set by parse_command_line
-	private svm_problem prob;		// set by read_problem
+	/** set by parse_command_line */
+	private svm_parameter param;
+	/** set by read_problem */
+	private svm_problem prob;
 	private svm_model model;
-	private String input_file_name;		// set by parse_command_line
-	private String model_file_name;		// set by parse_command_line
+	/** set by parse_command_line */
+	private String input_file_name;
+	/** set by parse_command_line */
+	private String model_file_name;
 	private String error_msg;
 	private int cross_validation;
 	private int nr_fold;
@@ -313,7 +317,7 @@ class svm_train
 	}
 
 	/**
-	 * read in a problem (in svm-light format)
+	 * Reads a problem from file (in SVM-light format).
 	 */
 	private void read_problem() throws IOException
 	{
