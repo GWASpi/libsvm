@@ -1,9 +1,18 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
@@ -13,6 +22,8 @@ import libsvm.svm_problem;
 
 class svm_train
 {
+	private static final Logger LOG = Logger.getLogger(svm_train.class.getName());
+
 	private svm_parameter param;		// set by parse_command_line
 	private svm_problem prob;		// set by read_problem
 	private svm_model model;
@@ -30,35 +41,33 @@ class svm_train
 
 	private static void exit_with_help()
 	{
-		System.out.print(
-		 "Usage: svm_train [options] training_set_file [model_file]\n"
-		+"options:\n"
-		+"-s svm_type : set type of SVM (default 0)\n"
-		+"	0 -- C-SVC\n"
-		+"	1 -- nu-SVC\n"
-		+"	2 -- one-class SVM\n"
-		+"	3 -- epsilon-SVR\n"
-		+"	4 -- nu-SVR\n"
-		+"-t kernel_type : set type of kernel function (default 2)\n"
-		+"	0 -- linear: u'*v\n"
-		+"	1 -- polynomial: (gamma*u'*v + coef0)^degree\n"
-		+"	2 -- radial basis function: exp(-gamma*|u-v|^2)\n"
-		+"	3 -- sigmoid: tanh(gamma*u'*v + coef0)\n"
-		+"	4 -- precomputed kernel (kernel values in training_set_file)\n"
-		+"-d degree : set degree in kernel function (default 3)\n"
-		+"-g gamma : set gamma in kernel function (default 1/num_features)\n"
-		+"-r coef0 : set coef0 in kernel function (default 0)\n"
-		+"-c cost : set the parameter C of C-SVC, epsilon-SVR, and nu-SVR (default 1)\n"
-		+"-n nu : set the parameter nu of nu-SVC, one-class SVM, and nu-SVR (default 0.5)\n"
-		+"-p epsilon : set the epsilon in loss function of epsilon-SVR (default 0.1)\n"
-		+"-m cachesize : set cache memory size in MB (default 100)\n"
-		+"-e epsilon : set tolerance of termination criterion (default 0.001)\n"
-		+"-h shrinking : whether to use the shrinking heuristics, 0 or 1 (default 1)\n"
-		+"-b probability_estimates : whether to train a SVC or SVR model for probability estimates, 0 or 1 (default 0)\n"
-		+"-wi weight : set the parameter C of class i to weight*C, for C-SVC (default 1)\n"
-		+"-v n : n-fold cross validation mode\n"
-		+"-q : quiet mode (no outputs)\n"
-		);
+		LOG.info("Usage: svm_train [options] training_set_file [model_file]");
+		LOG.info("options:");
+		LOG.info("-s svm_type : set type of SVM (default 0)");
+		LOG.info("	0 -- C-SVC");
+		LOG.info("	1 -- nu-SVC");
+		LOG.info("	2 -- one-class SVM");
+		LOG.info("	3 -- epsilon-SVR");
+		LOG.info("	4 -- nu-SVR");
+		LOG.info("-t kernel_type : set type of kernel function (default 2)");
+		LOG.info("	0 -- linear: u'*v");
+		LOG.info("	1 -- polynomial: (gamma*u'*v + coef0)^degree");
+		LOG.info("	2 -- radial basis function: exp(-gamma*|u-v|^2)");
+		LOG.info("	3 -- sigmoid: tanh(gamma*u'*v + coef0)");
+		LOG.info("	4 -- precomputed kernel (kernel values in training_set_file)");
+		LOG.info("-d degree : set degree in kernel function (default 3)");
+		LOG.info("-g gamma : set gamma in kernel function (default 1/num_features)");
+		LOG.info("-r coef0 : set coef0 in kernel function (default 0)");
+		LOG.info("-c cost : set the parameter C of C-SVC, epsilon-SVR, and nu-SVR (default 1)");
+		LOG.info("-n nu : set the parameter nu of nu-SVC, one-class SVM, and nu-SVR (default 0.5)");
+		LOG.info("-p epsilon : set the epsilon in loss function of epsilon-SVR (default 0.1)");
+		LOG.info("-m cachesize : set cache memory size in MB (default 100)");
+		LOG.info("-e epsilon : set tolerance of termination criterion (default 0.001)");
+		LOG.info("-h shrinking : whether to use the shrinking heuristics, 0 or 1 (default 1)");
+		LOG.info("-b probability_estimates : whether to train a SVC or SVR model for probability estimates, 0 or 1 (default 0)");
+		LOG.info("-wi weight : set the parameter C of class i to weight*C, for C-SVC (default 1)");
+		LOG.info("-v n : n-fold cross validation mode");
+		LOG.info("-q : quiet mode (no outputs)");
 		System.exit(1);
 	}
 
@@ -85,18 +94,17 @@ class svm_train
 				sumyy += y*y;
 				sumvy += v*y;
 			}
-			System.out.print("Cross Validation Mean squared error = "+total_error/prob.l+"\n");
-			System.out.print("Cross Validation Squared correlation coefficient = "+
-				((prob.l*sumvy-sumv*sumy)*(prob.l*sumvy-sumv*sumy))/
-				((prob.l*sumvv-sumv*sumv)*(prob.l*sumyy-sumy*sumy))+"\n"
-				);
+			LOG.log(Level.INFO, "Cross Validation Mean squared error = {0}", total_error/prob.l);
+			LOG.log(Level.INFO, "Cross Validation Squared correlation coefficient = {0}",
+					((prob.l*sumvy-sumv*sumy)*(prob.l*sumvy-sumv*sumy))
+					/ ((prob.l*sumvv-sumv*sumv)*(prob.l*sumyy-sumy*sumy)));
 		}
 		else
 		{
 			for(i=0;i<prob.l;i++)
 				if(target[i] == prob.y[i])
 					++total_correct;
-			System.out.print("Cross Validation Accuracy = "+100.0*total_correct/prob.l+"%\n");
+			LOG.log(Level.INFO, "Cross Validation Accuracy = {0}%", 100.0*total_correct/prob.l);
 		}
 	}
 
@@ -108,7 +116,7 @@ class svm_train
 
 		if(error_msg != null)
 		{
-			System.err.print("ERROR: "+error_msg+"\n");
+			LOG.severe(error_msg);
 			System.exit(1);
 		}
 
@@ -123,8 +131,44 @@ class svm_train
 		}
 	}
 
+	public static void setupLogging()
+	{
+		LogManager logManager = LogManager.getLogManager();
+		logManager.reset();
+		ConsoleHandler consoleHandler = new ConsoleHandler();
+		Formatter basicFormatter = new Formatter() {
+
+			private final SimpleFormatter messageFormatter = new SimpleFormatter();
+			private final String newLine = System.getProperty("line.separator", "\n");
+
+			@Override
+			public String format(LogRecord record) {
+
+				String messageStr = messageFormatter.formatMessage(record) + newLine;
+
+				if (record.getLevel().intValue() > Level.INFO.intValue())
+				{
+					messageStr = record.getLevel().getName() + " " + messageStr;
+				}
+
+				if (record.getThrown() != null)
+				{
+					StringWriter exStr = new StringWriter();
+					record.getThrown().printStackTrace(new PrintWriter(exStr));
+					messageStr = messageStr + exStr.toString();
+				}
+
+				return messageStr;
+			}
+		};
+		consoleHandler.setFormatter(basicFormatter);
+		Logger.getLogger("").addHandler(consoleHandler);
+	}
+
 	public static void main(String argv[]) throws IOException
 	{
+		setupLogging();
+
 		svm_train t = new svm_train();
 		t.run(argv);
 	}
@@ -134,7 +178,7 @@ class svm_train
 		double d = Double.valueOf(s).doubleValue();
 		if (Double.isNaN(d) || Double.isInfinite(d))
 		{
-			System.err.print("NaN or Infinity in input\n");
+			LOG.severe("NaN or Infinity in input");
 			System.exit(1);
 		}
 		return(d);
@@ -222,7 +266,7 @@ class svm_train
 					nr_fold = atoi(argv[i]);
 					if(nr_fold < 2)
 					{
-						System.err.print("n-fold cross validation: n must >= 2\n");
+						LOG.severe("n-fold cross validation: n must >= 2");
 						exit_with_help();
 					}
 					break;
@@ -244,7 +288,7 @@ class svm_train
 					param.weight[param.nr_weight-1] = atof(argv[i]);
 					break;
 				default:
-					System.err.print("Unknown option: " + argv[i-1] + "\n");
+					LOG.log(Level.SEVERE, "Unknown option: {0}", argv[i-1]);
 					exit_with_help();
 			}
 		}
@@ -315,12 +359,12 @@ class svm_train
 			{
 				if (prob.x[i][0].index != 0)
 				{
-					System.err.print("Wrong kernel matrix: first column must be 0:sample_serial_number\n");
+					LOG.severe("Wrong kernel matrix: first column must be 0:sample_serial_number");
 					System.exit(1);
 				}
 				if ((int)prob.x[i][0].value <= 0 || (int)prob.x[i][0].value > max_index)
 				{
-					System.err.print("Wrong input format: sample_serial_number out of range\n");
+					LOG.severe("Wrong input format: sample_serial_number out of range");
 					System.exit(1);
 				}
 			}

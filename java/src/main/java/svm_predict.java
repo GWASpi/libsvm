@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
@@ -13,6 +15,8 @@ import libsvm.svm_parameter;
 
 class svm_predict
 {
+	private static final Logger LOG = Logger.getLogger(svm_predict.class.getName());
+
 	private static double atof(String s)
 	{
 		return Double.valueOf(s).doubleValue();
@@ -39,7 +43,8 @@ class svm_predict
 			if(svm_type == svm_parameter.EPSILON_SVR ||
 			   svm_type == svm_parameter.NU_SVR)
 			{
-				System.out.print("Prob. model for test data: target value = predicted value + z,\nz: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma="+svm.svm_get_svr_probability(model)+"\n");
+				LOG.log(Level.INFO, "Prob. model for test data: target value = predicted value + z,");
+				LOG.log(Level.INFO, "z: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma={0}", svm.svm_get_svr_probability(model));
 			}
 			else
 			{
@@ -97,27 +102,30 @@ class svm_predict
 		if(svm_type == svm_parameter.EPSILON_SVR ||
 		   svm_type == svm_parameter.NU_SVR)
 		{
-			System.out.print("Mean squared error = "+error/total+" (regression)\n");
-			System.out.print("Squared correlation coefficient = "+
-				 ((total*sumvy-sumv*sumy)*(total*sumvy-sumv*sumy))/
-				 ((total*sumvv-sumv*sumv)*(total*sumyy-sumy*sumy))+
-				 " (regression)\n");
+			LOG.log(Level.INFO, "Mean squared error = {0} (regression)", error/total);
+			LOG.log(Level.INFO, "Squared correlation coefficient = {0} (regression)",
+					((total*sumvy-sumv*sumy)*(total*sumvy-sumv*sumy))
+					/ ((total*sumvv-sumv*sumv)*(total*sumyy-sumy*sumy)));
 		}
 		else
-			System.out.print("Accuracy = "+(double)correct/total*100+
-				 "% ("+correct+"/"+total+") (classification)\n");
+		{
+			LOG.log(Level.INFO, "Accuracy = {0}% ({1}/{2}) (classification)",
+					new Object[] {(double)correct/total*100, correct, total});
+		}
 	}
 
 	private static void exit_with_help()
 	{
-		System.err.print("usage: svm_predict [options] test_file model_file output_file\n"
-		+"options:\n"
-		+"-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); one-class SVM not supported yet\n");
+		LOG.severe("usage: svm_predict [options] test_file model_file output_file");
+		LOG.severe("options:");
+		LOG.severe("-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); one-class SVM not supported yet");
 		System.exit(1);
 	}
 
 	public static void main(String argv[]) throws IOException
 	{
+		svm_train.setupLogging();
+
 		int i, predict_probability=0;
 
 		// parse options
@@ -131,7 +139,7 @@ class svm_predict
 					predict_probability = atoi(argv[i]);
 					break;
 				default:
-					System.err.print("Unknown option: " + argv[i-1] + "\n");
+					LOG.log(Level.SEVERE, "Unknown option: {0}", argv[i-1]);
 					exit_with_help();
 			}
 		}
@@ -146,7 +154,7 @@ class svm_predict
 			{
 				if(svm.svm_check_probability_model(model)==0)
 				{
-					System.err.print("Model does not support probabiliy estimates\n");
+					LOG.severe("Model does not support probabiliy estimates");
 					System.exit(1);
 				}
 			}
@@ -154,7 +162,7 @@ class svm_predict
 			{
 				if(svm.svm_check_probability_model(model)!=0)
 				{
-					System.out.print("Model supports probability estimates, but disabled in prediction.\n");
+					LOG.severe("Model supports probability estimates, but disabled in prediction.");
 				}
 			}
 			predict(input,output,model,predict_probability);
