@@ -63,7 +63,7 @@ class svm_scale
 
 	private void output(int index, double value)
 	{
-		/* skip single-valued attribute */
+		// skip single-valued attribute
 		if(feature_max[index] == feature_min[index])
 			return;
 
@@ -143,8 +143,8 @@ class svm_scale
 			System.exit(1);
 		}
 
-		/* assumption: min index of attributes is 1 */
-		/* pass 1: find out max index of attributes */
+		// assumption: min index of attributes is 1
+		// pass 1: find out max index of attributes
 		max_index = 0;
 
 		if(restore_filename != null)
@@ -206,7 +206,7 @@ class svm_scale
 
 		fp = rewind(fp, data_filename);
 
-		/* pass 2: find out min/max value */
+		// pass 2: find out min/max value
 		while(readline(fp) != null)
 		{
 			int next_index = 1;
@@ -243,17 +243,17 @@ class svm_scale
 
 		fp = rewind(fp, data_filename);
 
-		/* pass 2.5: save/restore feature_min/feature_max */
+		// pass 2.5: save/restore feature_min/feature_max
 		if(restore_filename != null)
 		{
 			// fp_restore rewinded in finding max_index
 			int idx, c;
 			double fmin, fmax;
 
-			fp_restore.mark(2);				// for reset
+			fp_restore.mark(2); // for reset
 			if((c = fp_restore.read()) == 'y')
 			{
-				fp_restore.readLine();		// pass the '\n' after 'y'
+				fp_restore.readLine(); // pass the '\n' after 'y'
 				StringTokenizer st = new StringTokenizer(fp_restore.readLine());
 				y_lower = Double.parseDouble(st.nextToken());
 				y_upper = Double.parseDouble(st.nextToken());
@@ -266,7 +266,7 @@ class svm_scale
 				fp_restore.reset();
 
 			if(fp_restore.read() == 'x') {
-				fp_restore.readLine();		// pass the '\n' after 'x'
+				fp_restore.readLine(); // pass the '\n' after 'x'
 				StringTokenizer st = new StringTokenizer(fp_restore.readLine());
 				lower = Double.parseDouble(st.nextToken());
 				upper = Double.parseDouble(st.nextToken());
@@ -316,7 +316,7 @@ class svm_scale
 			fp_save.close();
 		}
 
-		/* pass 3: scale */
+		// pass 3: scale
 		while(readline(fp) != null)
 		{
 			int next_index = 1;
