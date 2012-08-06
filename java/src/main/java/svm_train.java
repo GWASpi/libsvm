@@ -46,7 +46,7 @@ class svm_train
 	private static void exit_with_help()
 	{
 		LOG.info("Usage: svm_train [options] training_set_file [model_file]");
-		LOG.info("options:");
+		LOG.info("Options:");
 		LOG.info("-s svm_type : set type of SVM (default 0)");
 		LOG.info("	0 -- C-SVC");
 		LOG.info("	1 -- nu-SVC");

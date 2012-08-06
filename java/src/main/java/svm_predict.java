@@ -116,8 +116,8 @@ class svm_predict
 
 	private static void exit_with_help()
 	{
-		LOG.severe("usage: svm_predict [options] test_file model_file output_file");
-		LOG.severe("options:");
+		LOG.severe("Usage: svm_predict [options] test_file model_file output_file");
+		LOG.severe("Options:");
 		LOG.severe("-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); one-class SVM not supported yet");
 		System.exit(1);
 	}
