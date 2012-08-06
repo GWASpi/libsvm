@@ -3,9 +3,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.Vector;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
@@ -322,8 +322,8 @@ class svm_train
 	private void read_problem() throws IOException
 	{
 		BufferedReader fp = new BufferedReader(new FileReader(input_file_name));
-		List<Double> vy = new Vector<Double>();
-		List<svm_node[]> vx = new Vector<svm_node[]>();
+		List<Double> vy = new LinkedList<Double>();
+		List<svm_node[]> vx = new LinkedList<svm_node[]>();
 		int max_index = 0;
 
 		while(true)
