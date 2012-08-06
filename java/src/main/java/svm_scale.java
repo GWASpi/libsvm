@@ -29,7 +29,7 @@ class svm_scale
 	private static void exit_with_help()
 	{
 		LOG.info("Usage: svm-scale [options] data_filename");
-		LOG.info("options:");
+		LOG.info("Options:");
 		LOG.info("-l lower : x scaling lower limit (default -1)");
 		LOG.info("-u upper : x scaling upper limit (default +1)");
 		LOG.info("-y y_lower y_upper : y scaling limits (default: no y scaling)");
