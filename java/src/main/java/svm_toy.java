@@ -515,9 +515,60 @@ public class svm_toy extends Applet
 		clear_all();
 	}
 
+	private static void logHelp()
+	{
+		LOG.info("Usage: svm_toy [options]");
+		LOG.info("");
+		LOG.info("Starts a GUI that allows for easy, basic testing");
+		LOG.info("of the libraries functions.");
+		LOG.info("");
+		LOG.info("Options:");
+		LOG.info("--help : display this help and exit");
+		LOG.info("--version : output version information and exit");
+	}
+
 	public static void main(String[] argv)
 	{
 		svm_train.setupLogging();
+
+		try
+		{
+			// parse options
+			for(int i=0;i<argv.length;i++)
+			{
+				if(argv[i].charAt(0) != '-') break;
+				++i;
+				switch(argv[i-1].charAt(1))
+				{
+					case '-':
+						// long option
+						String longOptName = argv[i-1].substring(2);
+						if (longOptName.equals("help"))
+						{
+							logHelp();
+							System.exit(0);
+						}
+						else if (longOptName.equals("version"))
+						{
+							LOG.log(Level.INFO, "{0} {1} {2}", new Object[] {"LibSVM", "svm-toy", svm.getVersion()});
+							System.exit(0);
+						}
+						else
+						{
+							throw new IllegalArgumentException("Unknown long option: " + argv[i-1]);
+						}
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown option: " + argv[i-1]);
+				}
+			}
+		}
+		catch (IllegalArgumentException ex)
+		{
+			LOG.log(Level.SEVERE, "Failed parsing arguments", ex);
+			logHelp();
+			System.exit(1);
+		}
 
 		new AppletFrame("svm_toy",new svm_toy(),500,500+50);
 	}
