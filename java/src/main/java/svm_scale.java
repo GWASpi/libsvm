@@ -215,7 +215,7 @@ class svm_scale
 
 		while (readline(fp) != null)
 		{
-			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
+			StringTokenizer st = new StringTokenizer(line," \t\f:");
 			st.nextToken();
 			while(st.hasMoreTokens())
 			{
@@ -249,7 +249,7 @@ class svm_scale
 			double target;
 			double value;
 
-			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
+			StringTokenizer st = new StringTokenizer(line," \t\f:");
 			target = Double.parseDouble(st.nextToken());
 			y_max = Math.max(y_max, target);
 			y_min = Math.min(y_min, target);
@@ -359,7 +359,7 @@ class svm_scale
 			double target;
 			double value;
 
-			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
+			StringTokenizer st = new StringTokenizer(line," \t\f:");
 			target = Double.parseDouble(st.nextToken());
 			output_target(target);
 			while(st.hasMoreElements())

@@ -451,7 +451,7 @@ public class svm_toy extends Applet
 			String line;
 			while((line = fp.readLine()) != null)
 			{
-				StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
+				StringTokenizer st = new StringTokenizer(line," \t\f:");
 				if(st.countTokens() == 5)
 				{
 					byte value = (byte)atoi(st.nextToken());

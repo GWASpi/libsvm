@@ -2905,7 +2905,7 @@ public class svm
 		for(int i=0;i<l;i++)
 		{
 			String line = fp.readLine();
-			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
+			StringTokenizer st = new StringTokenizer(line," \t\f:");
 
 			for(int k=0;k<m;k++)
 				model.sv_coef[k][i] = atof(st.nextToken());
