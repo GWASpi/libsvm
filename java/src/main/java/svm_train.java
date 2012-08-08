@@ -17,7 +17,6 @@ import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
 import libsvm.svm_parameter;
-import libsvm.svm_print_interface;
 import libsvm.svm_problem;
 
 class svm_train
@@ -36,12 +35,6 @@ class svm_train
 	private String error_msg;
 	private int cross_validation;
 	private int nr_fold;
-
-	private static svm_print_interface svm_print_null = new svm_print_interface()
-	{
-		@Override
-		public void print(String s) {}
-	};
 
 	private static void logHelp()
 	{
@@ -200,7 +193,6 @@ class svm_train
 	private void parse_command_line(String argv[])
 	{
 		int i = 0;
-		svm_print_interface print_func = null;	// default printing to stdout
 
 		param = new svm_parameter();
 		// default values
@@ -269,7 +261,7 @@ class svm_train
 						param.probability = atoi(argv[i]);
 						break;
 					case 'q':
-						print_func = svm_print_null;
+						svm.svm_setLogLevel(Level.OFF);
 						i--;
 						break;
 					case 'v':
@@ -327,8 +319,6 @@ class svm_train
 			logHelp();
 			System.exit(1);
 		}
-
-		svm.svm_set_print_string_function(print_func);
 
 		// determine filenames
 

@@ -486,7 +486,7 @@ class Solver {
 				nr_free++;
 
 		if(2*nr_free < active_size)
-			svm.info("\nWARNING: using -h 0 may be faster\n");
+			svm.LOG_COMMON.warning("using -h 0 may be faster");
 
 		if (nr_free*l > 2*active_size*(l-active_size))
 		{
@@ -579,7 +579,7 @@ class Solver {
 			{
 				counter = Math.min(l,1000);
 				if(shrinking!=0) do_shrinking();
-				svm.info(".");
+				svm.LOG_COMMON.info(".");
 			}
 
 			if(select_working_set(working_set)!=0)
@@ -588,7 +588,7 @@ class Solver {
 				reconstruct_gradient();
 				// reset active set size and check
 				active_size = l;
-				svm.info("*");
+				svm.LOG_COMMON.info("*");
 				if(select_working_set(working_set)!=0)
 					break;
 				else
@@ -748,9 +748,9 @@ class Solver {
 				// reconstruct the whole gradient to calculate objective value
 				reconstruct_gradient();
 				active_size = l;
-				svm.info("*");
+				svm.LOG_COMMON.info("*");
 			}
-			svm.info("\nWARNING: reaching max number of iterations");
+			svm.LOG_COMMON.warning("reaching max number of iterations");
 		}
 
 		// calculate rho
@@ -776,7 +776,7 @@ class Solver {
 		si.upper_bound_p = Cp;
 		si.upper_bound_n = Cn;
 
-		svm.info("\noptimization finished, #iter = "+iter+"\n");
+		svm.LOG_COMMON.log(Level.INFO, "optimization finished, #iter = {0}", iter);
 	}
 
 	/**
@@ -1445,23 +1445,12 @@ class SVR_Q extends Kernel
 public class svm
 {
 	private static final Logger LOG = Logger.getLogger(svm.class.getName());
+	/**
+	 * This is shared with other classes,
+	 * and may be turned of through a command line switch (-q or --quiet)
+	 */
+	public static final Logger LOG_COMMON = Logger.getLogger(svm.class.getName() + "_COMMON");
 	public static final Random rand = new Random();
-
-	private static final svm_print_interface svm_print_stdout = new svm_print_interface()
-	{
-		@Override
-		public void print(String s)
-		{
-			LOG.info(s);
-		}
-	};
-
-	private static svm_print_interface svm_print_string = svm_print_stdout;
-
-	static void info(String s)
-	{
-		svm_print_string.print(s);
-	}
 
 	/**
 	 * @see #getVersionNumber()
@@ -1527,7 +1516,7 @@ public class svm
 			sum_alpha += alpha[i];
 
 		if (Cp==Cn)
-			svm.info("nu = "+sum_alpha/(Cp*prob.l)+"\n");
+			svm.LOG_COMMON.log(Level.INFO, "nu = {0}", sum_alpha/(Cp*prob.l));
 
 		for(i=0;i<l;i++)
 			alpha[i] *= y[i];
@@ -1573,7 +1562,7 @@ public class svm
 			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
 		double r = si.r;
 
-		svm.info("C = "+1/r+"\n");
+		svm.LOG_COMMON.log(Level.INFO, "C = {0}", 1/r);
 
 		for(i=0;i<l;i++)
 			alpha[i] *= y[i]/r;
@@ -1642,7 +1631,7 @@ public class svm
 			alpha[i] = alpha2[i] - alpha2[i+l];
 			sum_alpha += Math.abs(alpha[i]);
 		}
-		svm.info("nu = "+sum_alpha/(param.C*l)+"\n");
+		svm.LOG_COMMON.log(Level.INFO, "nu = {0}", sum_alpha/(param.C*l));
 	}
 
 	private static void solve_nu_svr(svm_problem prob, svm_parameter param,
@@ -1672,7 +1661,7 @@ public class svm
 		s.Solve(2*l, new SVR_Q(prob,param), linear_term, y,
 			alpha2, C, C, param.eps, si, param.shrinking);
 
-		svm.info("epsilon = "+(-si.r)+"\n");
+		svm.LOG_COMMON.log(Level.INFO, "epsilon = {0}", (-si.r));
 
 		for(i=0;i<l;i++)
 			alpha[i] = alpha2[i] - alpha2[i+l];
@@ -1709,7 +1698,7 @@ public class svm
 				break;
 		}
 
-		svm.info("obj = "+si.obj+", rho = "+si.rho+"\n");
+		svm.LOG_COMMON.log(Level.INFO, "obj = {0}, rho = {1}", new Object[] {si.obj, si.rho});
 
 		// output SVs
 
@@ -1733,7 +1722,7 @@ public class svm
 			}
 		}
 
-		svm.info("nSV = "+nSV+", nBSV = "+nBSV+"\n");
+		svm.LOG_COMMON.log(Level.INFO, "nSV = {0}, nBSV = {1}", new Object[] {nSV, nBSV});
 
 		decision_function f = new decision_function();
 		f.alpha = alpha;
@@ -1847,13 +1836,13 @@ public class svm
 
 			if (stepsize < min_step)
 			{
-				svm.info("Line search fails in two-class probability estimates\n");
+				svm.LOG_COMMON.warning("Line search fails in two-class probability estimates");
 				break;
 			}
 		}
 
 		if (iter>=max_iter)
-			svm.info("Reaching maximal iterations in two-class probability estimates\n");
+			svm.LOG_COMMON.warning("Reaching maximal iterations in two-class probability estimates");
 		probAB[0]=A;probAB[1]=B;
 	}
 
@@ -1926,7 +1915,7 @@ public class svm
 			}
 		}
 		if (iter>=max_iter)
-			svm.info("Exceeds max_iter in multiclass_prob\n");
+			svm.LOG_COMMON.warning("Exceeds max_iter in multiclass_prob");
 	}
 
 	/**
@@ -2044,7 +2033,8 @@ public class svm
 			else
 				mae+=Math.abs(ymv[i]);
 		mae /= (prob.l-count);
-		svm.info("Prob. model for test data: target value = predicted value + z,\nz: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma="+mae+"\n");
+		svm.LOG_COMMON.log(Level.INFO, "Prob. model for test data: target value = predicted value + z,");
+		svm.LOG_COMMON.log(Level.INFO, "z: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma={0}", mae);
 		return mae;
 	}
 
@@ -2181,7 +2171,7 @@ public class svm
 			int[] count = tmp_count[0];
 
 			if(nr_class == 1)
-				svm.info("WARNING: training data in only one class. See README for details.\n");
+				svm.LOG_COMMON.warning("training data in only one class. See README for details.");
 
 			svm_node[][] x = new svm_node[l][];
 			int i;
@@ -2303,7 +2293,7 @@ public class svm
 				nz_count[i] = nSV;
 			}
 
-			svm.info("Total nSV = "+nnz+"\n");
+			svm.LOG_COMMON.log(Level.INFO, "Total nSV = {0}", nnz);
 
 			model.l = nnz;
 			model.SV = new svm_node[nnz][];
@@ -2999,11 +2989,8 @@ public class svm
 			return 0;
 	}
 
-	public static void svm_set_print_string_function(svm_print_interface print_func)
+	public static void svm_setLogLevel(Level level)
 	{
-		if (print_func == null)
-			svm_print_string = svm_print_stdout;
-		else
-			svm_print_string = print_func;
+		LOG_COMMON.setLevel(level);
 	}
 }
