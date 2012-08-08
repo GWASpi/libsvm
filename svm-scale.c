@@ -9,6 +9,9 @@ static void logHelp()
 {
 	printf(
 	"Usage: svm-scale [options] data_filename\n"
+	"\n"
+	"Scales data points to the requested range.\n"
+	"\n"
 	"Options:\n"
 	"-l lower : x scaling lower limit (default -1)\n"
 	"-u upper : x scaling upper limit (default +1)\n"

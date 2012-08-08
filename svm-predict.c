@@ -156,6 +156,10 @@ static void logHelp()
 {
 	printf(
 	"Usage: svm-predict [options] test_file model_file output_file\n"
+	"\n"
+	"Tests given input data against a model (trained with svm-train),\n"
+	"and writes the results into a file.\n"
+	"\n"
 	"Options:\n"
 	"-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); for one-class SVM only 0 is supported\n"
 	"--help : display this help and exit\n"
