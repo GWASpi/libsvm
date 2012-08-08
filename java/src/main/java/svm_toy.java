@@ -570,10 +570,14 @@ public class svm_toy extends Applet
 			System.exit(1);
 		}
 
-		new AppletFrame("svm_toy",new svm_toy(),500,500+50);
+		AppletFrame appletFrame = new AppletFrame("svm_toy",new svm_toy(),500,500+50);
+		appletFrame.setVisible(true);
 	}
 }
 
+/**
+ * Allows to start the Applet as a desktop GUI application.
+ */
 class AppletFrame extends Frame
 {
 	AppletFrame(String title, Applet applet, int width, int height)
@@ -590,6 +594,5 @@ class AppletFrame extends Frame
 		applet.start();
 		this.add(applet);
 		this.pack();
-		this.setVisible(true);
 	}
 }
