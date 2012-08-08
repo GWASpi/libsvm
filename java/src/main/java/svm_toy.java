@@ -47,13 +47,13 @@ public class svm_toy extends Applet
 
 	private static final Color colors[] =
 	{
-	  new Color(0,0,0),
-	  new Color(0,120,120),
-	  new Color(120,120,0),
-	  new Color(120,0,120),
-	  new Color(0,200,200),
-	  new Color(200,200,0),
-	  new Color(200,0,200)
+		new Color(0,0,0),
+		new Color(0,120,120),
+		new Color(120,120,0),
+		new Color(120,0,120),
+		new Color(0,200,200),
+		new Color(200,200,0),
+		new Color(200,0,200)
 	};
 
 	private static class point
