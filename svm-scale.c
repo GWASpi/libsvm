@@ -3,19 +3,21 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "svm.h" // only required for libsvm_version
 
-void exit_with_help()
+static void logHelp()
 {
 	printf(
 	"Usage: svm-scale [options] data_filename\n"
-	"options:\n"
+	"Options:\n"
 	"-l lower : x scaling lower limit (default -1)\n"
 	"-u upper : x scaling upper limit (default +1)\n"
 	"-y y_lower y_upper : y scaling limits (default: no y scaling)\n"
 	"-s save_filename : save scaling parameters to save_filename\n"
 	"-r restore_filename : restore scaling parameters from restore_filename\n"
+	"--help : display this help and exit\n"
+	"--version : output version information and exit\n"
 	);
-	exit(1);
 }
 
 char *line = NULL;
@@ -60,9 +62,29 @@ int main(int argc,char **argv)
 				break;
 			case 's': save_filename = argv[i]; break;
 			case 'r': restore_filename = argv[i]; break;
+			case '-':
+				// long option
+				if (strcmp(&argv[i-1][2], "help") == 0)
+				{
+					logHelp();
+					exit(0);
+				}
+				else if (strcmp(&argv[i-1][2], "version") == 0)
+				{
+					printf("%s %s %i\n", "LibSVM", "svm-scale", libsvm_version);
+					exit(0);
+				}
+				else
+				{
+					fprintf(stderr, "Unknown long option: %s\n", argv[i-1]);
+					logHelp();
+					exit(1);
+				}
+				break;
 			default:
-				fprintf(stderr,"unknown option\n");
-				exit_with_help();
+				fprintf(stderr,"Unknown option: %s\n", argv[i-1]);
+				logHelp();
+				exit(1);
 		}
 	}
 
@@ -78,8 +100,12 @@ int main(int argc,char **argv)
 		exit(1);
 	}
 
-	if(argc != i+1) 
-		exit_with_help();
+	if(argc != i+1)
+	{
+		fprintf(stderr,"No data file-name given\n");
+		logHelp();
+		exit(1);
+	}
 
 	fp=fopen(argv[i],"r");
 	

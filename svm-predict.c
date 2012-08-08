@@ -152,14 +152,15 @@ void predict(FILE *input, FILE *output)
 		free(prob_estimates);
 }
 
-void exit_with_help()
+static void logHelp()
 {
 	printf(
 	"Usage: svm-predict [options] test_file model_file output_file\n"
-	"options:\n"
+	"Options:\n"
 	"-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); for one-class SVM only 0 is supported\n"
+	"--help : display this help and exit\n"
+	"--version : output version information and exit\n"
 	);
-	exit(1);
 }
 
 int main(int argc, char **argv)
@@ -177,13 +178,45 @@ int main(int argc, char **argv)
 			case 'b':
 				predict_probability = atoi(argv[i]);
 				break;
+			case '-':
+				// long option
+				if (strcmp(&argv[i-1][2], "help") == 0)
+				{
+					logHelp();
+					exit(0);
+				}
+				else if (strcmp(&argv[i-1][2], "version") == 0)
+				{
+					printf("%s %s %i\n", "LibSVM", "svm-predict", libsvm_version);
+					exit(0);
+				}
+				else
+				{
+					fprintf(stderr, "Unknown long option: %s\n", argv[i-1]);
+					logHelp();
+					exit(1);
+				}
+				break;
 			default:
-				fprintf(stderr,"Unknown option: -%c\n", argv[i-1][1]);
-				exit_with_help();
+				fprintf(stderr,"Unknown option: %s\n", argv[i-1]);
+				logHelp();
+				exit(1);
 		}
 	}
 	if(i>=argc-2)
-		exit_with_help();
+	{
+		if(i>=argc-1)
+		{
+			if(i>=argc)
+			{
+				fprintf(stderr,"No test file-name given\n");
+			}
+			fprintf(stderr,"No model file-name given\n");
+		}
+		fprintf(stderr,"No output file-name given\n");
+		logHelp();
+		exit(1);
+	}
 	
 	input = fopen(argv[i],"r");
 	if(input == NULL)

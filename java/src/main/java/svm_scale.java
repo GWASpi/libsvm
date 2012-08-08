@@ -7,6 +7,7 @@ import java.util.Formatter;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import libsvm.svm;
 
 class svm_scale
 {
@@ -26,7 +27,7 @@ class svm_scale
 	private long num_nonzeros = 0;
 	private long new_num_nonzeros = 0;
 
-	private static void exit_with_help()
+	private static void logHelp()
 	{
 		LOG.info("Usage: svm-scale [options] data_filename");
 		LOG.info("Options:");
@@ -35,7 +36,9 @@ class svm_scale
 		LOG.info("-y y_lower y_upper : y scaling limits (default: no y scaling)");
 		LOG.info("-s save_filename : save scaling parameters to save_filename");
 		LOG.info("-r restore_filename : restore scaling parameters from restore_filename");
-		System.exit(1);
+		LOG.info("--help : display this help and exit");
+		LOG.info("--version : output version information and exit");
+
 	}
 
 	private BufferedReader rewind(BufferedReader fp, String filename) throws IOException
@@ -98,48 +101,78 @@ class svm_scale
 		String restore_filename = null;
 		String data_filename = null;
 
-
-		for(i=0;i<argv.length;i++)
+		try
 		{
-			if (argv[i].charAt(0) != '-')	break;
-			++i;
-			switch(argv[i-1].charAt(1))
+			for(i=0;i<argv.length;i++)
 			{
-				case 'l': lower = Double.parseDouble(argv[i]);	break;
-				case 'u': upper = Double.parseDouble(argv[i]);	break;
-				case 'y':
-					  y_lower = Double.parseDouble(argv[i]);
-					  ++i;
-					  y_upper = Double.parseDouble(argv[i]);
-					  y_scaling = true;
-					  break;
-				case 's': save_filename = argv[i];	break;
-				case 'r': restore_filename = argv[i];	break;
-				default:
-					  LOG.severe("unknown option");
-					  exit_with_help();
+				if (argv[i].charAt(0) != '-')	break;
+				++i;
+				switch(argv[i-1].charAt(1))
+				{
+					case 'l':
+						lower = Double.parseDouble(argv[i]);
+						break;
+					case 'u':
+						upper = Double.parseDouble(argv[i]);
+						break;
+					case 'y':
+						y_lower = Double.parseDouble(argv[i]);
+						++i;
+						y_upper = Double.parseDouble(argv[i]);
+						y_scaling = true;
+						break;
+					case 's':
+						save_filename = argv[i];
+						break;
+					case 'r':
+						restore_filename = argv[i];
+						break;
+					case '-':
+						// long option
+						String longOptName = argv[i-1].substring(2);
+						if (longOptName.equals("help"))
+						{
+							logHelp();
+							System.exit(0);
+						}
+						else if (longOptName.equals("version"))
+						{
+							LOG.log(Level.INFO, "{0} {1} {2}", new Object[] {"LibSVM", "svm-scale", svm.getVersion()});
+							System.exit(0);
+						}
+						else
+						{
+							throw new IllegalArgumentException("Unknown long option: " + argv[i-1]);
+						}
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown option: " + argv[i-1]);
+				}
+			}
+
+			if(!(upper > lower) || (y_scaling && !(y_upper > y_lower)))
+			{
+				throw new IllegalArgumentException("inconsistent lower/upper specification");
+			}
+			if(restore_filename != null && save_filename != null)
+			{
+				throw new IllegalArgumentException("cannot use -r and -s simultaneously");
+			}
+
+			if(argv.length != i+1)
+				throw new IllegalArgumentException("No data file-name given");
+
+			data_filename = argv[i];
+			try {
+				fp = new BufferedReader(new FileReader(data_filename));
+			} catch (Exception ex) {
+				throw new IllegalArgumentException("Can't open file " + data_filename, ex);
 			}
 		}
-
-		if(!(upper > lower) || (y_scaling && !(y_upper > y_lower)))
+		catch (IllegalArgumentException ex)
 		{
-			LOG.severe("inconsistent lower/upper specification");
-			System.exit(1);
-		}
-		if(restore_filename != null && save_filename != null)
-		{
-			LOG.severe("cannot use -r and -s simultaneously");
-			System.exit(1);
-		}
-
-		if(argv.length != i+1)
-			exit_with_help();
-
-		data_filename = argv[i];
-		try {
-			fp = new BufferedReader(new FileReader(data_filename));
-		} catch (Exception e) {
-			LOG.log(Level.SEVERE, "can't open file " + data_filename, e);
+			LOG.log(Level.SEVERE, "Failed parsing arguments", ex);
+			logHelp();
 			System.exit(1);
 		}
 

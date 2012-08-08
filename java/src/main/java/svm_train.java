@@ -43,7 +43,7 @@ class svm_train
 		public void print(String s) {}
 	};
 
-	private static void exit_with_help()
+	private static void logHelp()
 	{
 		LOG.info("Usage: svm_train [options] training_set_file [model_file]");
 		LOG.info("Options:");
@@ -72,7 +72,8 @@ class svm_train
 		LOG.info("-wi weight : set the parameter C of class i to weight*C, for C-SVC (default 1)");
 		LOG.info("-v n : n-fold cross validation mode");
 		LOG.info("-q : quiet mode (no outputs)");
-		System.exit(1);
+		LOG.info("--help : display this help and exit");
+		LOG.info("--version : output version information and exit");
 	}
 
 	private void do_cross_validation()
@@ -195,7 +196,7 @@ class svm_train
 
 	private void parse_command_line(String argv[])
 	{
-		int i;
+		int i = 0;
 		svm_print_interface print_func = null;	// default printing to stdout
 
 		param = new svm_parameter();
@@ -218,91 +219,115 @@ class svm_train
 		cross_validation = 0;
 
 		// parse options
-		for(i=0;i<argv.length;i++)
+		try
 		{
-			if(argv[i].charAt(0) != '-') break;
-			if(++i>=argv.length)
-				exit_with_help();
-			switch(argv[i-1].charAt(1))
+			for(i=0;i<argv.length;i++)
 			{
-				case 's':
-					param.svm_type = atoi(argv[i]);
-					break;
-				case 't':
-					param.kernel_type = atoi(argv[i]);
-					break;
-				case 'd':
-					param.degree = atoi(argv[i]);
-					break;
-				case 'g':
-					param.gamma = atof(argv[i]);
-					break;
-				case 'r':
-					param.coef0 = atof(argv[i]);
-					break;
-				case 'n':
-					param.nu = atof(argv[i]);
-					break;
-				case 'm':
-					param.cache_size = atof(argv[i]);
-					break;
-				case 'c':
-					param.C = atof(argv[i]);
-					break;
-				case 'e':
-					param.eps = atof(argv[i]);
-					break;
-				case 'p':
-					param.p = atof(argv[i]);
-					break;
-				case 'h':
-					param.shrinking = atoi(argv[i]);
-					break;
-				case 'b':
-					param.probability = atoi(argv[i]);
-					break;
-				case 'q':
-					print_func = svm_print_null;
-					i--;
-					break;
-				case 'v':
-					cross_validation = 1;
-					nr_fold = atoi(argv[i]);
-					if(nr_fold < 2)
-					{
-						LOG.severe("n-fold cross validation: n must >= 2");
-						exit_with_help();
-					}
-					break;
-				case 'w':
-					++param.nr_weight;
-					{
-						int[] old = param.weight_label;
-						param.weight_label = new int[param.nr_weight];
-						System.arraycopy(old,0,param.weight_label,0,param.nr_weight-1);
-					}
+				if(argv[i].charAt(0) != '-') break;
+				i++;
+				if ((i >= argv.length) && (argv[i-1].charAt(1) != '-'))
+					throw new IllegalArgumentException("Missing argument for option " + argv[i]);
+				switch(argv[i-1].charAt(1))
+				{
+					case 's':
+						param.svm_type = atoi(argv[i]);
+						break;
+					case 't':
+						param.kernel_type = atoi(argv[i]);
+						break;
+					case 'd':
+						param.degree = atoi(argv[i]);
+						break;
+					case 'g':
+						param.gamma = atof(argv[i]);
+						break;
+					case 'r':
+						param.coef0 = atof(argv[i]);
+						break;
+					case 'n':
+						param.nu = atof(argv[i]);
+						break;
+					case 'm':
+						param.cache_size = atof(argv[i]);
+						break;
+					case 'c':
+						param.C = atof(argv[i]);
+						break;
+					case 'e':
+						param.eps = atof(argv[i]);
+						break;
+					case 'p':
+						param.p = atof(argv[i]);
+						break;
+					case 'h':
+						param.shrinking = atoi(argv[i]);
+						break;
+					case 'b':
+						param.probability = atoi(argv[i]);
+						break;
+					case 'q':
+						print_func = svm_print_null;
+						i--;
+						break;
+					case 'v':
+						cross_validation = 1;
+						nr_fold = atoi(argv[i]);
+						if(nr_fold < 2)
+							throw new IllegalArgumentException("n-fold cross validation: n must >= 2");
+						break;
+					case 'w':
+						++param.nr_weight;
+						{
+							int[] old = param.weight_label;
+							param.weight_label = new int[param.nr_weight];
+							System.arraycopy(old,0,param.weight_label,0,param.nr_weight-1);
+						}
 
-					{
-						double[] old = param.weight;
-						param.weight = new double[param.nr_weight];
-						System.arraycopy(old,0,param.weight,0,param.nr_weight-1);
-					}
+						{
+							double[] old = param.weight;
+							param.weight = new double[param.nr_weight];
+							System.arraycopy(old,0,param.weight,0,param.nr_weight-1);
+						}
 
-					param.weight_label[param.nr_weight-1] = atoi(argv[i-1].substring(2));
-					param.weight[param.nr_weight-1] = atof(argv[i]);
-					break;
-				default:
-					LOG.log(Level.SEVERE, "Unknown option: {0}", argv[i-1]);
-					exit_with_help();
+						param.weight_label[param.nr_weight-1] = atoi(argv[i-1].substring(2));
+						param.weight[param.nr_weight-1] = atof(argv[i]);
+						break;
+					case '-':
+						// long option
+						String longOptName = argv[i-1].substring(2);
+						if (longOptName.equals("help"))
+						{
+							logHelp();
+							System.exit(0);
+						}
+						else if (longOptName.equals("version"))
+						{
+							LOG.log(Level.INFO, "{0} {1} {2}", new Object[] {"LibSVM", "svm-train", svm.getVersion()});
+							System.exit(0);
+						}
+						else
+						{
+							throw new IllegalArgumentException("Unknown long option: " + argv[i-1]);
+						}
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown option: " + argv[i-1]);
+				}
 			}
+
+			if(i>=argv.length)
+				throw new IllegalArgumentException("No model file-name given");
+		}
+		catch (IllegalArgumentException ex)
+		{
+			LOG.log(Level.SEVERE, "Failed parsing arguments", ex);
+			logHelp();
+			System.exit(1);
 		}
 
 		svm.svm_set_print_string_function(print_func);
 
 		// determine filenames
-
-		if(i>=argv.length)
-			exit_with_help();
 
 		input_file_name = argv[i];
 
