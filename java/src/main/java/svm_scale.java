@@ -30,6 +30,9 @@ class svm_scale
 	private static void logHelp()
 	{
 		LOG.info("Usage: svm-scale [options] data_filename");
+		LOG.info("");
+		LOG.info("Scales data points to the requested range.");
+		LOG.info("");
 		LOG.info("Options:");
 		LOG.info("-l lower : x scaling lower limit (default -1)");
 		LOG.info("-u upper : x scaling upper limit (default +1)");

@@ -46,6 +46,9 @@ class svm_train
 	private static void logHelp()
 	{
 		LOG.info("Usage: svm_train [options] training_set_file [model_file]");
+		LOG.info("");
+		LOG.info("Trains a model on training data, which may be used with svm-predict.");
+		LOG.info("");
 		LOG.info("Options:");
 		LOG.info("-s svm_type : set type of SVM (default 0)");
 		LOG.info("	0 -- C-SVC       (multi-class classification)");

@@ -136,6 +136,10 @@ class svm_predict {
 	private static void logHelp()
 	{
 		LOG.info("Usage: svm_predict [options] test_file model_file output_file");
+		LOG.info("");
+		LOG.info("Tests given input data against a model (trained with svm-train),");
+		LOG.info("and writes the results into a file.");
+		LOG.info("");
 		LOG.info("Options:");
 		LOG.info("-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); one-class SVM not supported yet");
 		LOG.info("--help : display this help and exit");

@@ -12,6 +12,9 @@ static void logHelp()
 {
 	printf(
 	"Usage: svm-train [options] training_set_file [model_file]\n"
+	"\n"
+	"Trains a model on training data, which may be used with svm-predict.\n"
+	"\n"
 	"Options:\n"
 	"-s svm_type : set type of SVM (default 0)\n"
 	"	0 -- C-SVC		(multi-class classification)\n"
