@@ -359,7 +359,7 @@ class svm_train
 			String line = fp.readLine();
 			if(line == null) break;
 
-			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
+			StringTokenizer st = new StringTokenizer(line," \t\f:");
 
 			vy.add(atof(st.nextToken()));
 			int m = st.countTokens()/2;
