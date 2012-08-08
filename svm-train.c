@@ -8,11 +8,11 @@
 
 void print_null(const char *s) {}
 
-void exit_with_help()
+static void logHelp()
 {
 	printf(
 	"Usage: svm-train [options] training_set_file [model_file]\n"
-	"options:\n"
+	"Options:\n"
 	"-s svm_type : set type of SVM (default 0)\n"
 	"	0 -- C-SVC		(multi-class classification)\n"
 	"	1 -- nu-SVC		(multi-class classification)\n"
@@ -38,8 +38,9 @@ void exit_with_help()
 	"-wi weight : set the parameter C of class i to weight*C, for C-SVC (default 1)\n"
 	"-v n: n-fold cross validation mode\n"
 	"-q : quiet mode (no outputs)\n"
+	"--help : display this help and exit\n"
+	"--version : output version information and exit\n"
 	);
-	exit(1);
 }
 
 void exit_input_error(int line_num)
@@ -185,8 +186,13 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 	for(i=1;i<argc;i++)
 	{
 		if(argv[i][0] != '-') break;
-		if(++i>=argc)
-			exit_with_help();
+		++i;
+		if((i >= argc) && (argv[i-1][1] != '-'))
+		{
+			fprintf(stderr,"Missing argument for option %s\n", argv[i-1]);
+			logHelp();
+			exit(1);
+		}
 		switch(argv[i-1][1])
 		{
 			case 's':
@@ -235,7 +241,8 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 				if(nr_fold < 2)
 				{
 					fprintf(stderr,"n-fold cross validation: n must >= 2\n");
-					exit_with_help();
+					logHelp();
+					exit(1);
 				}
 				break;
 			case 'w':
@@ -245,9 +252,29 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 				param.weight_label[param.nr_weight-1] = atoi(&argv[i-1][2]);
 				param.weight[param.nr_weight-1] = atof(argv[i]);
 				break;
+			case '-':
+				// long option
+				if (strcmp(&argv[i-1][2], "help") == 0)
+				{
+					logHelp();
+					exit(0);
+				}
+				else if (strcmp(&argv[i-1][2], "version") == 0)
+				{
+					printf("%s %s %i\n", "LibSVM", "svm-train", libsvm_version);
+					exit(0);
+				}
+				else
+				{
+					fprintf(stderr, "Unknown long option: %s\n", argv[i-1]);
+					logHelp();
+					exit(1);
+				}
+				break;
 			default:
-				fprintf(stderr,"Unknown option: -%c\n", argv[i-1][1]);
-				exit_with_help();
+				fprintf(stderr,"Unknown option: %s\n", argv[i-1]);
+				logHelp();
+				exit(1);
 		}
 	}
 
@@ -256,7 +283,11 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 	// determine filenames
 
 	if(i>=argc)
-		exit_with_help();
+	{
+		fprintf(stderr,"No model file-name given\n");
+		logHelp();
+		exit(1);
+	}
 
 	strcpy(input_file_name, argv[i]);
 

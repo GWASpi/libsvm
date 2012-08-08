@@ -81,7 +81,7 @@ class svm_predict {
 			String line = input.readLine();
 			if(line == null) break;
 
-			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
+			StringTokenizer st = new StringTokenizer(line," \t\f:");
 
 			double target = atof(st.nextToken());
 			int m = st.countTokens()/2;
@@ -133,12 +133,13 @@ class svm_predict {
 		}
 	}
 
-	private static void exit_with_help()
+	private static void logHelp()
 	{
-		LOG.severe("Usage: svm_predict [options] test_file model_file output_file");
-		LOG.severe("Options:");
-		LOG.severe("-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); one-class SVM not supported yet");
-		System.exit(1);
+		LOG.info("Usage: svm_predict [options] test_file model_file output_file");
+		LOG.info("Options:");
+		LOG.info("-b probability_estimates: whether to predict probability estimates, 0 or 1 (default 0); one-class SVM not supported yet");
+		LOG.info("--help : display this help and exit");
+		LOG.info("--version : output version information and exit");
 	}
 
 	public static void main(String argv[]) throws IOException
@@ -148,63 +149,88 @@ class svm_predict {
 		int i, predict_probability=0;
         	svm_print_string = svm_print_stdout;
 
-		// parse options
-		for(i=0;i<argv.length;i++)
-		{
-			if(argv[i].charAt(0) != '-') break;
-			++i;
-			switch(argv[i-1].charAt(1))
-			{
-				case 'b':
-					predict_probability = atoi(argv[i]);
-					break;
-				case 'q':
-					svm_print_string = svm_print_null;
-					i--;
-					break;
-				default:
-					LOG.log(Level.SEVERE, "Unknown option: {0}", argv[i-1]);
-					exit_with_help();
-			}
-		}
-		if(i>=argv.length-2)
-			exit_with_help();
 		try
 		{
-			BufferedReader input = new BufferedReader(new FileReader(argv[i]));
-			DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(argv[i+2])));
-			svm_model model = svm.svm_load_model(argv[i+1]);
-			if (model == null)
+			// parse options
+			for(i=0;i<argv.length;i++)
 			{
-				System.err.print("can't open model file "+argv[i+1]+"\n");
-				System.exit(1);
-			}
-			if(predict_probability == 1)
-			{
-				if(svm.svm_check_probability_model(model)==0)
+				if(argv[i].charAt(0) != '-') break;
+				++i;
+				switch(argv[i-1].charAt(1))
 				{
-					LOG.severe("Model does not support probabiliy estimates");
-					System.exit(1);
+					case 'b':
+						predict_probability = atoi(argv[i]);
+						break;
+					case 'q':
+						svm_print_string = svm_print_null;
+						i--;
+						break;
+					case '-':
+						// long option
+						String longOptName = argv[i-1].substring(2);
+						if (longOptName.equals("help"))
+						{
+							logHelp();
+							System.exit(0);
+						}
+						else if (longOptName.equals("version"))
+						{
+							LOG.log(Level.INFO, "{0} {1} {2}", new Object[] {"LibSVM", "svm-predict", svm.getVersion()});
+							System.exit(0);
+						}
+						else
+						{
+							throw new IllegalArgumentException("Unknown long option: " + argv[i-1]);
+						}
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown option: " + argv[i-1]);
 				}
 			}
-			else
+			if (i >= argv.length)
+				throw new IllegalArgumentException("No test file-name given");
+			if (i >= argv.length-1)
+				throw new IllegalArgumentException("No model file-name given");
+			if (i >= argv.length-2)
+				throw new IllegalArgumentException("No output file-name given");
+			try
 			{
-				if(svm.svm_check_probability_model(model)!=0)
+				BufferedReader input = new BufferedReader(new FileReader(argv[i]));
+				DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(argv[i+2])));
+				svm_model model = svm.svm_load_model(argv[i+1]);
+				if(predict_probability == 1)
 				{
-					LOG.severe("Model supports probability estimates, but disabled in prediction.");
+					if(svm.svm_check_probability_model(model)==0)
+					{
+						LOG.severe("Model does not support probabiliy estimates");
+						System.exit(1);
+					}
 				}
+				else
+				{
+					if(svm.svm_check_probability_model(model)!=0)
+					{
+						LOG.severe("Model supports probability estimates, but disabled in prediction.");
+					}
+				}
+				predict(input,output,model,predict_probability);
+				input.close();
+				output.close();
 			}
-			predict(input,output,model,predict_probability);
-			input.close();
-			output.close();
+			catch(FileNotFoundException ex)
+			{
+				throw new IllegalArgumentException("Failed to find file", ex);
+			}
+			catch(ArrayIndexOutOfBoundsException ex)
+			{
+				throw new IllegalArgumentException("Bad arguments", ex);
+			}
 		}
-		catch(FileNotFoundException e)
+		catch (IllegalArgumentException ex)
 		{
-			exit_with_help();
-		}
-		catch(ArrayIndexOutOfBoundsException e)
-		{
-			exit_with_help();
+			LOG.log(Level.SEVERE, "Failed parsing arguments", ex);
+			logHelp();
+			System.exit(1);
 		}
 	}
 }
