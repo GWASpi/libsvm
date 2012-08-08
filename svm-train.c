@@ -307,7 +307,7 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 	}
 }
 
-// read in a problem (in svmlight format)
+// read in a problem (in SVM-light format)
 
 void read_problem(const char *filename)
 {
