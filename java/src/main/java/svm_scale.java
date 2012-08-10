@@ -337,16 +337,16 @@ class svm_scale
 
 			if(y_scaling)
 			{
-				formatter.format("y\n");
-				formatter.format("%.16g %.16g\n", y_lower, y_upper);
-				formatter.format("%.16g %.16g\n", y_min, y_max);
+				formatter.format("y%n");
+				formatter.format("%.16g %.16g%n", y_lower, y_upper);
+				formatter.format("%.16g %.16g%n", y_min, y_max);
 			}
-			formatter.format("x\n");
-			formatter.format("%.16g %.16g\n", lower, upper);
+			formatter.format("x%n");
+			formatter.format("%.16g %.16g%n", lower, upper);
 			for(i=1;i<=max_index;i++)
 			{
 				if(feature_min[i] != feature_max[i])
-					formatter.format("%d %.16g %.16g\n", i, feature_min[i], feature_max[i]);
+					formatter.format("%d %.16g %.16g%n", i, feature_min[i], feature_max[i]);
 			}
 			fp_save.write(formatter.toString());
 			fp_save.close();

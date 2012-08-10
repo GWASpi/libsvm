@@ -12,7 +12,7 @@ class Cache
 
 	private final int l;
 	private long size;
-	private final class head_t
+	private static final class head_t
 	{
 		/** a circular list */
 		head_t prev, next;

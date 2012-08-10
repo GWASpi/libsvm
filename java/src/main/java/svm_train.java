@@ -344,24 +344,31 @@ class svm_train
 		List<svm_node[]> vx = new LinkedList<svm_node[]>();
 		int max_index = 0;
 
-		while(true)
+		try
 		{
-			String line = fp.readLine();
-			if(line == null) break;
-
-			StringTokenizer st = new StringTokenizer(line," \t\f:");
-
-			vy.add(atof(st.nextToken()));
-			int m = st.countTokens()/2;
-			svm_node[] x = new svm_node[m];
-			for(int j=0;j<m;j++)
+			while(true)
 			{
-				x[j] = new svm_node();
-				x[j].index = atoi(st.nextToken());
-				x[j].value = atof(st.nextToken());
+				String line = fp.readLine();
+				if(line == null) break;
+
+				StringTokenizer st = new StringTokenizer(line," \t\f:");
+
+				vy.add(atof(st.nextToken()));
+				int m = st.countTokens()/2;
+				svm_node[] x = new svm_node[m];
+				for(int j=0;j<m;j++)
+				{
+					x[j] = new svm_node();
+					x[j].index = atoi(st.nextToken());
+					x[j].value = atof(st.nextToken());
+				}
+				if(m>0) max_index = Math.max(max_index, x[m-1].index);
+				vx.add(x);
 			}
-			if(m>0) max_index = Math.max(max_index, x[m-1].index);
-			vx.add(x);
+		}
+		finally
+		{
+			fp.close();
 		}
 
 		prob = new svm_problem();
@@ -377,6 +384,7 @@ class svm_train
 			param.gamma = 1.0/max_index;
 
 		if(param.kernel_type == svm_parameter.PRECOMPUTED)
+		{
 			for(int i=0;i<prob.l;i++)
 			{
 				if (prob.x[i][0].index != 0)
@@ -390,7 +398,6 @@ class svm_train
 					System.exit(1);
 				}
 			}
-
-		fp.close();
+		}
 	}
 }

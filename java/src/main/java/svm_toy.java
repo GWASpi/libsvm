@@ -524,11 +524,8 @@ public class svm_toy extends JApplet
 		prob.l = dataPoints.size();
 		prob.y = new double[prob.l];
 
-		if(param.kernel_type == svm_parameter.PRECOMPUTED)
-		{
-		}
-		else if(param.svm_type == svm_parameter.EPSILON_SVR ||
-			param.svm_type == svm_parameter.NU_SVR)
+		if(param.svm_type == svm_parameter.EPSILON_SVR ||
+				param.svm_type == svm_parameter.NU_SVR)
 		{
 			if(param.gamma == 0) param.gamma = 1;
 			prob.x = new svm_node[prob.l][1];
@@ -544,7 +541,7 @@ public class svm_toy extends JApplet
 			// build model
 			model = svm.svm_train(prob, param);
 		}
-		else
+		else if(param.kernel_type != svm_parameter.PRECOMPUTED)
 		{
 			if(param.gamma == 0) param.gamma = 0.5;
 			prob.x = new svm_node [prob.l][2];

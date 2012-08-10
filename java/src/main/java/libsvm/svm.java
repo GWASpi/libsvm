@@ -270,6 +270,8 @@ public class svm
 			case svm_parameter.NU_SVR:
 				solve_nu_svr(prob,param,alpha,si);
 				break;
+			default:
+				throw new IllegalArgumentException("Unknown SVM type: " + param.svm_type);
 		}
 
 		svm.LOG_COMMON.log(Level.INFO, "obj = {0}, rho = {1}", new Object[] {si.obj, si.rho});
@@ -1468,21 +1470,20 @@ public class svm
 		if(param.eps <= 0)
 			return "eps <= 0";
 
-		if(svm_type == svm_parameter.C_SVC ||
-		   svm_type == svm_parameter.EPSILON_SVR ||
-		   svm_type == svm_parameter.NU_SVR)
-			if(param.C <= 0)
-				return "C <= 0";
+		if((svm_type == svm_parameter.C_SVC ||
+				svm_type == svm_parameter.EPSILON_SVR ||
+				svm_type == svm_parameter.NU_SVR) &&
+				(param.C <= 0))
+			return "C <= 0";
 
-		if(svm_type == svm_parameter.NU_SVC ||
-		   svm_type == svm_parameter.ONE_CLASS ||
-		   svm_type == svm_parameter.NU_SVR)
-			if(param.nu <= 0 || param.nu > 1)
-				return "nu <= 0 or nu > 1";
+		if((svm_type == svm_parameter.NU_SVC ||
+				svm_type == svm_parameter.ONE_CLASS ||
+				svm_type == svm_parameter.NU_SVR) &&
+				(param.nu <= 0 || param.nu > 1))
+			return "nu <= 0 or nu > 1";
 
-		if(svm_type == svm_parameter.EPSILON_SVR)
-			if(param.p < 0)
-				return "p < 0";
+		if((svm_type == svm_parameter.EPSILON_SVR) && (param.p < 0))
+			return "p < 0";
 
 		if(param.shrinking != 0 &&
 		   param.shrinking != 1)
