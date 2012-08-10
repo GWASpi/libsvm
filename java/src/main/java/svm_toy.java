@@ -1,25 +1,17 @@
-import java.applet.Applet;
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
-import java.awt.Button;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FileDialog;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Panel;
-import java.awt.TextField;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.geom.Point2D;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,155 +20,380 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JApplet;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.LineBorder;
 import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
 import libsvm.svm_parameter;
 import libsvm.svm_problem;
 
-public class svm_toy extends Applet
+public class svm_toy extends JApplet
 {
 	private static final Logger LOG = Logger.getLogger(svm_toy.class.getName());
 
-	private static final String DEFAULT_PARAM="-t 2 -c 100";
-	private int XLEN;
-	private int YLEN;
+	private static final String DEFAULT_PARAM = "-t 2 -c 100";
 
-	// off-screen buffer
-
-	private Image buffer;
-	private Graphics buffer_gc;
-
-	// pre-allocated colors
-
-	private static final Color colors[] =
+	/**
+	 * Allows to start the JApplet as a desktop GUI application.
+	 */
+	private static class AppletFrame extends JFrame
 	{
-		new Color(0,0,0),
-		new Color(0,120,120),
-		new Color(120,120,0),
-		new Color(120,0,120),
-		new Color(0,200,200),
-		new Color(200,200,0),
-		new Color(200,0,200)
-	};
-
-	private static class point
-	{
-		point(double x, double y, byte value)
+		AppletFrame(JApplet applet)
 		{
-			this.x = x;
-			this.y = y;
-			this.value = value;
+			super(applet.getName());
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			applet.init();
+			applet.start();
+			add(applet);
 		}
-		double x, y;
-		byte value;
 	}
 
-	private List<point> point_list = new ArrayList<point>();
-	private byte current_value = 1;
+	// pre-allocated colors
+	private static final Color[] colors =
+	{
+		new Color(0, 0, 0),
+		new Color(0, 120, 120),
+		new Color(120, 120, 0),
+		new Color(120, 0, 120),
+		new Color(0, 200, 200),
+		new Color(200, 200, 0),
+		new Color(200, 0, 200)
+	};
+
+	private static class DataPoint
+	{
+		private Point2D location;
+		private byte value;
+
+		DataPoint(Point2D location, byte value)
+		{
+			this.location = location;
+			this.value = value;
+		}
+
+		DataPoint(double x, double y, byte value)
+		{
+			this(new Point2D.Double(x, y), value);
+		}
+
+		public Point2D getLocation() {
+			return location;
+		}
+
+		public byte getValue() {
+			return value;
+		}
+	}
+
+	private class DrawPanel extends JPanel
+	{
+		private final List<DataPoint> dataPoints;
+		private svm_parameter param;
+		private svm_model model;
+
+		DrawPanel()
+		{
+			dataPoints = new ArrayList<DataPoint>();
+			param = null;
+			model = null;
+
+			setBackground(Color.BLACK);
+			enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+		}
+
+		List<DataPoint> getDataPoints() {
+			return dataPoints;
+		}
+
+		void addPoint(DataPoint dataPoint)
+		{
+			dataPoints.add(dataPoint);
+		}
+
+		void clearPoints()
+		{
+			dataPoints.clear();
+			repaint();
+		}
+
+		void clear()
+		{
+			dataPoints.clear();
+			param = null;
+			model = null;
+			repaint();
+		}
+
+		void setModel(svm_parameter param, svm_model model)
+		{
+			this.param = param;
+			this.model = model;
+		}
+
+		private void predictAndDrawClassificationBoundaries(Graphics g)
+		{
+			int canvasWidth = drawPanel.getWidth();
+			int canvasHeight = drawPanel.getHeight();
+
+			// classify & draw
+			if(param.svm_type == svm_parameter.EPSILON_SVR
+					|| param.svm_type == svm_parameter.NU_SVR)
+			{
+				svm_node[] x = new svm_node[1];
+				x[0] = new svm_node();
+				x[0].index = 1;
+				int[] j = new int[canvasWidth];
+
+				for (int i = 0; i < canvasWidth; i++)
+				{
+					x[0].value = (double) i / canvasWidth;
+					j[i] = (int)(canvasHeight * svm.svm_predict(model, x));
+				}
+
+				g.setColor(colors[0]);
+				g.drawLine(0, 0, 0, canvasHeight-1);
+
+				int p = (int)(param.p * canvasHeight);
+				for (int i = 1; i < canvasWidth; i++)
+				{
+					g.setColor(colors[0]);
+					g.drawLine(i, 0, i, canvasHeight-1);
+
+					g.setColor(colors[5]);
+					g.drawLine(i-1, j[i-1], i, j[i]);
+
+					if (param.svm_type == svm_parameter.EPSILON_SVR)
+					{
+						g.setColor(colors[2]);
+						g.drawLine(i-1, j[i-1]+p, i, j[i]+p);
+
+						g.setColor(colors[2]);
+						g.drawLine(i-1, j[i-1]-p, i, j[i]-p);
+					}
+				}
+			}
+			else if(param.kernel_type != svm_parameter.PRECOMPUTED)
+			{
+				svm_node[] x = new svm_node[2];
+				x[0] = new svm_node();
+				x[1] = new svm_node();
+				x[0].index = 1;
+				x[1].index = 2;
+
+				for (int i = 0; i < canvasWidth; i++)
+					for (int j = 0; j < canvasHeight ; j++) {
+						x[0].value = (double) i / canvasWidth;
+						x[1].value = (double) j / canvasHeight;
+						double d = svm.svm_predict(model, x);
+						if (param.svm_type == svm_parameter.ONE_CLASS && d < 0)
+						{
+							d = 2;
+						}
+						g.setColor(colors[(int)d]);
+						g.drawLine(i, j, i, j);
+				}
+			}
+		}
+
+		private Point2D real2canvas(Point2D point)
+		{
+			return point; // TODO FIXME
+		}
+
+		private void drawPoint(Graphics g, DataPoint dataPoint)
+		{
+			Color c = colors[dataPoint.getValue()+3];
+
+			g.setColor(c);
+			g.fillRect((int)(dataPoint.getLocation().getX()*getWidth()),(int)(dataPoint.getLocation().getY()*getHeight()),4,4);
+		}
+
+		private void drawPoints(Graphics g)
+		{
+			for (DataPoint dataPoint : dataPoints)
+			{
+				drawPoint(g, dataPoint);
+			}
+		}
+
+		@Override
+		public void paint(Graphics g)
+		{
+			super.paint(g);
+
+			if ((param != null) && (model != null))
+			{
+				predictAndDrawClassificationBoundaries(g);
+			}
+
+			drawPoints(g);
+		}
+
+		@Override
+		protected void processMouseEvent(MouseEvent e)
+		{
+			if(e.getID() == MouseEvent.MOUSE_PRESSED)
+			{
+
+				if(e.getX() >= getWidth() || e.getY() >= getHeight()) return;
+				DataPoint p = new DataPoint((double)e.getX()/getWidth(),
+							(double)e.getY()/getHeight(),
+							currentValue);
+				addPoint(p);
+				drawPoint(getGraphics(), p);
+			}
+		}
+	}
+
+	private class ChangeColorAction extends AbstractAction
+	{
+		private JPanel pCurrentColor;
+
+		ChangeColorAction(JPanel pCurrentColor) {
+			super("Change Color");
+
+			this.pCurrentColor = pCurrentColor;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+
+			++currentValue;
+			if(currentValue > 3)
+			{
+				currentValue = 1;
+			}
+			pCurrentColor.setBackground(colors[currentValue]);
+		}
+	}
+
+	private class RunAction extends AbstractAction
+	{
+		RunAction() {
+			super("Run");
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+			classify();
+		}
+	}
+
+	private class ClearAction extends AbstractAction
+	{
+		ClearAction() {
+			super("Clear");
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+			drawPanel.clear();
+		}
+	}
+
+	private class SaveAction extends AbstractAction
+	{
+		SaveAction() {
+			super("Save");
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+//			button_save_clicked(input_line.getText());
+		}
+	}
+
+	private class LoadAction extends AbstractAction
+	{
+		LoadAction() {
+			super("Load");
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+			button_load_clicked();
+		}
+	}
+
+	private DrawPanel drawPanel;
+	private JTextField tfInputLine;
+
+	private Action changeColorAction;
+	private Action runAction;
+	private Action clearAction;
+	private Action saveAction;
+	private Action loadAction;
+
+	private byte currentValue = 1;
+
+	public svm_toy()
+	{
+		setName(String.format("%s %s %s", "LibSVM", "svm-toy", svm.getVersion()));
+	}
 
 	@Override
 	public void init()
 	{
-		setSize(getSize());
+		JPanel pCurrentColor = new JPanel();
+		pCurrentColor.setBorder(new LineBorder(Color.BLACK));
+		drawPanel = new DrawPanel();
 
-		final Button button_change = new Button("Change");
-		Button button_run = new Button("Run");
-		Button button_clear = new Button("Clear");
-		Button button_save = new Button("Save");
-		Button button_load = new Button("Load");
-		final TextField input_line = new TextField(DEFAULT_PARAM);
+		changeColorAction = new ChangeColorAction(pCurrentColor);
+		runAction = new RunAction();
+		clearAction = new ClearAction();
+		saveAction = new SaveAction();
+		loadAction = new LoadAction();
+
+		JButton bChange = new JButton(changeColorAction);
+		JButton bRun = new JButton(runAction);
+		JButton bClear = new JButton(clearAction);
+		JButton bSave = new JButton(saveAction);
+		JButton bLoad = new JButton(loadAction);
+		tfInputLine = new JTextField(DEFAULT_PARAM);
 
 		BorderLayout layout = new BorderLayout();
 		this.setLayout(layout);
 
-		Panel p = new Panel();
+		JPanel pControls = new JPanel();
 		GridBagLayout gridbag = new GridBagLayout();
-		p.setLayout(gridbag);
+		pControls.setLayout(gridbag);
 
 		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(5, 5, 5, 5);
 		c.weightx = 1;
 		c.gridwidth = 1;
-		gridbag.setConstraints(button_change,c);
-		gridbag.setConstraints(button_run,c);
-		gridbag.setConstraints(button_clear,c);
-		gridbag.setConstraints(button_save,c);
-		gridbag.setConstraints(button_load,c);
+		gridbag.setConstraints(pCurrentColor,c);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		gridbag.setConstraints(bChange,c);
+		gridbag.setConstraints(bRun,c);
+		gridbag.setConstraints(bClear,c);
+		gridbag.setConstraints(bSave,c);
+		gridbag.setConstraints(bLoad,c);
 		c.weightx = 5;
 		c.gridwidth = 5;
-		gridbag.setConstraints(input_line,c);
+		gridbag.setConstraints(tfInputLine,c);
 
-		button_change.setBackground(colors[current_value]);
+		pCurrentColor.setBackground(colors[currentValue]);
 
-		p.add(button_change);
-		p.add(button_run);
-		p.add(button_clear);
-		p.add(button_save);
-		p.add(button_load);
-		p.add(input_line);
-		this.add(p,BorderLayout.SOUTH);
+		pControls.add(pCurrentColor);
+		pControls.add(bChange);
+		pControls.add(bRun);
+		pControls.add(bClear);
+		pControls.add(bSave);
+		pControls.add(bLoad);
+		pControls.add(tfInputLine);
+		this.add(pControls, BorderLayout.SOUTH);
 
-		button_change.addActionListener(new ActionListener()
-		{ public void actionPerformed (ActionEvent e)
-		  { button_change_clicked(); button_change.setBackground(colors[current_value]); }});
-
-		button_run.addActionListener(new ActionListener()
-		{ public void actionPerformed (ActionEvent e)
-		  { button_run_clicked(input_line.getText()); }});
-
-		button_clear.addActionListener(new ActionListener()
-		{ public void actionPerformed (ActionEvent e)
-		  { button_clear_clicked(); }});
-
-		button_save.addActionListener(new ActionListener()
-		{ public void actionPerformed (ActionEvent e)
-		  { button_save_clicked(input_line.getText()); }});
-
-		button_load.addActionListener(new ActionListener()
-		{ public void actionPerformed (ActionEvent e)
-		  { button_load_clicked(); }});
-
-		input_line.addActionListener(new ActionListener()
-		{ public void actionPerformed (ActionEvent e)
-		  { button_run_clicked(input_line.getText()); }});
-
-		this.enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-	}
-
-	void draw_point(point p)
-	{
-		Color c = colors[p.value+3];
-
-		Graphics window_gc = getGraphics();
-		buffer_gc.setColor(c);
-		buffer_gc.fillRect((int)(p.x*XLEN),(int)(p.y*YLEN),4,4);
-		window_gc.setColor(c);
-		window_gc.fillRect((int)(p.x*XLEN),(int)(p.y*YLEN),4,4);
-	}
-
-	void clear_all()
-	{
-		point_list.clear();
-		if(buffer != null)
-		{
-			buffer_gc.setColor(colors[0]);
-			buffer_gc.fillRect(0,0,XLEN,YLEN);
-		}
-		repaint();
-	}
-
-	void draw_all_points()
-	{
-		int n = point_list.size();
-		for(int i=0;i<n;i++)
-			draw_point(point_list.get(i));
-	}
-
-	void button_change_clicked()
-	{
-		++current_value;
-		if(current_value > 3) current_value = 1;
+		this.add(drawPanel, BorderLayout.CENTER);
 	}
 
 	private static double atof(String s)
@@ -189,11 +406,8 @@ public class svm_toy extends Applet
 		return Integer.parseInt(s);
 	}
 
-	void button_run_clicked(String args)
+	private svm_parameter parseParams(String args)
 	{
-		// guard
-		if(point_list.isEmpty()) return;
-
 		svm_parameter param = new svm_parameter();
 
 		// default values
@@ -214,56 +428,54 @@ public class svm_toy extends Applet
 		param.weight = new double[0];
 
 		// parse options
-		StringTokenizer st = new StringTokenizer(args);
-		String[] argv = new String[st.countTokens()];
-		for(int i=0;i<argv.length;i++)
-			argv[i] = st.nextToken();
+		String[] argv = args.split("[ \t\n\r\f]+");
 
-		for(int i=0;i<argv.length;i++)
+		int argi;
+		for (argi = 0; argi < argv.length; argi++)
 		{
-			if(argv[i].charAt(0) != '-') break;
-			if(++i>=argv.length)
+			if(argv[argi].charAt(0) != '-') break;
+			if(++argi>=argv.length)
 			{
 				LOG.warning("unknown option");
 				break;
 			}
-			switch(argv[i-1].charAt(1))
+			switch(argv[argi-1].charAt(1))
 			{
 				case 's':
-					param.svm_type = atoi(argv[i]);
+					param.svm_type = atoi(argv[argi]);
 					break;
 				case 't':
-					param.kernel_type = atoi(argv[i]);
+					param.kernel_type = atoi(argv[argi]);
 					break;
 				case 'd':
-					param.degree = atoi(argv[i]);
+					param.degree = atoi(argv[argi]);
 					break;
 				case 'g':
-					param.gamma = atof(argv[i]);
+					param.gamma = atof(argv[argi]);
 					break;
 				case 'r':
-					param.coef0 = atof(argv[i]);
+					param.coef0 = atof(argv[argi]);
 					break;
 				case 'n':
-					param.nu = atof(argv[i]);
+					param.nu = atof(argv[argi]);
 					break;
 				case 'm':
-					param.cache_size = atof(argv[i]);
+					param.cache_size = atof(argv[argi]);
 					break;
 				case 'c':
-					param.C = atof(argv[i]);
+					param.C = atof(argv[argi]);
 					break;
 				case 'e':
-					param.eps = atof(argv[i]);
+					param.eps = atof(argv[argi]);
 					break;
 				case 'p':
-					param.p = atof(argv[i]);
+					param.p = atof(argv[argi]);
 					break;
 				case 'h':
-					param.shrinking = atoi(argv[i]);
+					param.shrinking = atoi(argv[argi]);
 					break;
 				case 'b':
-					param.probability = atoi(argv[i]);
+					param.probability = atoi(argv[argi]);
 					break;
 				case 'w':
 					++param.nr_weight;
@@ -279,17 +491,37 @@ public class svm_toy extends Applet
 						System.arraycopy(old,0,param.weight,0,param.nr_weight-1);
 					}
 
-					param.weight_label[param.nr_weight-1] = atoi(argv[i-1].substring(2));
-					param.weight[param.nr_weight-1] = atof(argv[i]);
+					param.weight_label[param.nr_weight-1] = atoi(argv[argi-1].substring(2));
+					param.weight[param.nr_weight-1] = atof(argv[argi]);
 					break;
 				default:
-					LOG.log(Level.WARNING, "unknown option \"{0}\"", argv[i-1].charAt(1));
+					LOG.log(Level.WARNING, "unknown option \"{0}\"", argv[argi-1].charAt(1));
 			}
+		}
+
+		return param;
+	}
+
+	void classify()
+	{
+		classify(tfInputLine.getText());
+	}
+
+	private svm_model train(svm_parameter param)
+	{
+		svm_model model = null;
+
+		List<DataPoint> dataPoints = drawPanel.getDataPoints();
+
+		// guard
+		if (dataPoints.isEmpty())
+		{
+			return model;
 		}
 
 		// build problem
 		svm_problem prob = new svm_problem();
-		prob.l = point_list.size();
+		prob.l = dataPoints.size();
 		prob.y = new double[prob.l];
 
 		if(param.kernel_type == svm_parameter.PRECOMPUTED)
@@ -302,58 +534,15 @@ public class svm_toy extends Applet
 			prob.x = new svm_node[prob.l][1];
 			for(int i=0;i<prob.l;i++)
 			{
-				point p = point_list.get(i);
+				DataPoint p = dataPoints.get(i);
 				prob.x[i][0] = new svm_node();
 				prob.x[i][0].index = 1;
-				prob.x[i][0].value = p.x;
-				prob.y[i] = p.y;
+				prob.x[i][0].value = p.getLocation().getX();
+				prob.y[i] = p.getLocation().getY();
 			}
 
-			// build model & classify
-			svm_model model = svm.svm_train(prob, param);
-			svm_node[] x = new svm_node[1];
-			x[0] = new svm_node();
-			x[0].index = 1;
-			int[] j = new int[XLEN];
-
-			Graphics window_gc = getGraphics();
-			for (int i = 0; i < XLEN; i++)
-			{
-				x[0].value = (double) i / XLEN;
-				j[i] = (int)(YLEN*svm.svm_predict(model, x));
-			}
-
-			buffer_gc.setColor(colors[0]);
-			buffer_gc.drawLine(0,0,0,YLEN-1);
-			window_gc.setColor(colors[0]);
-			window_gc.drawLine(0,0,0,YLEN-1);
-
-			int p = (int)(param.p * YLEN);
-			for(int i=1;i<XLEN;i++)
-			{
-				buffer_gc.setColor(colors[0]);
-				buffer_gc.drawLine(i,0,i,YLEN-1);
-				window_gc.setColor(colors[0]);
-				window_gc.drawLine(i,0,i,YLEN-1);
-
-				buffer_gc.setColor(colors[5]);
-				window_gc.setColor(colors[5]);
-				buffer_gc.drawLine(i-1,j[i-1],i,j[i]);
-				window_gc.drawLine(i-1,j[i-1],i,j[i]);
-
-				if(param.svm_type == svm_parameter.EPSILON_SVR)
-				{
-					buffer_gc.setColor(colors[2]);
-					window_gc.setColor(colors[2]);
-					buffer_gc.drawLine(i-1,j[i-1]+p,i,j[i]+p);
-					window_gc.drawLine(i-1,j[i-1]+p,i,j[i]+p);
-
-					buffer_gc.setColor(colors[2]);
-					window_gc.setColor(colors[2]);
-					buffer_gc.drawLine(i-1,j[i-1]-p,i,j[i]-p);
-					window_gc.drawLine(i-1,j[i-1]-p,i,j[i]-p);
-				}
-			}
+			// build model
+			model = svm.svm_train(prob, param);
 		}
 		else
 		{
@@ -361,54 +550,42 @@ public class svm_toy extends Applet
 			prob.x = new svm_node [prob.l][2];
 			for(int i=0;i<prob.l;i++)
 			{
-				point p = point_list.get(i);
+				DataPoint p = dataPoints.get(i);
 				prob.x[i][0] = new svm_node();
 				prob.x[i][0].index = 1;
-				prob.x[i][0].value = p.x;
+				prob.x[i][0].value = p.getLocation().getX();
 				prob.x[i][1] = new svm_node();
 				prob.x[i][1].index = 2;
-				prob.x[i][1].value = p.y;
-				prob.y[i] = p.value;
+				prob.x[i][1].value = p.getLocation().getY();
+				prob.y[i] = p.getValue();
 			}
 
-			// build model & classify
-			svm_model model = svm.svm_train(prob, param);
-			svm_node[] x = new svm_node[2];
-			x[0] = new svm_node();
-			x[1] = new svm_node();
-			x[0].index = 1;
-			x[1].index = 2;
-
-			Graphics window_gc = getGraphics();
-			for (int i = 0; i < XLEN; i++)
-				for (int j = 0; j < YLEN ; j++) {
-					x[0].value = (double) i / XLEN;
-					x[1].value = (double) j / YLEN;
-					double d = svm.svm_predict(model, x);
-					if (param.svm_type == svm_parameter.ONE_CLASS && d<0) d=2;
-					buffer_gc.setColor(colors[(int)d]);
-					window_gc.setColor(colors[(int)d]);
-					buffer_gc.drawLine(i,j,i,j);
-					window_gc.drawLine(i,j,i,j);
-			}
+			// build model
+			model = svm.svm_train(prob, param);
 		}
 
-		draw_all_points();
+		return model;
 	}
 
-	void button_clear_clicked()
+	void classify(String args)
 	{
-		clear_all();
+		svm_parameter param = parseParams(args);
+
+		svm_model model = train(param);
+
+		drawPanel.setModel(param, model);
+		drawPanel.repaint();
 	}
 
 	void button_save_clicked(String args)
 	{
-		FileDialog dialog = new FileDialog(new Frame(),"Save",FileDialog.SAVE);
+		JFileChooser dialog = new JFileChooser();
+		dialog.setDialogType(JFileChooser.SAVE_DIALOG);
 		dialog.setVisible(true);
-		String filename = dialog.getDirectory() + dialog.getFile();
-		if (filename == null) return;
+		File file = dialog.getSelectedFile();
+		if (file == null) return;
 		try {
-			DataOutputStream fp = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filename)));
+			DataOutputStream fp = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
 
 			int svm_type = svm_parameter.C_SVC;
 			int svm_type_idx = args.indexOf("-s ");
@@ -418,21 +595,22 @@ public class svm_toy extends Applet
 				svm_type = atoi(svm_str_st.nextToken());
 			}
 
-			int n = point_list.size();
+			List<DataPoint> dataPoints = drawPanel.getDataPoints();
+			int n = dataPoints.size();
 			if(svm_type == svm_parameter.EPSILON_SVR || svm_type == svm_parameter.NU_SVR)
 			{
 				for(int i=0;i<n;i++)
 				{
-					point p = point_list.get(i);
-					fp.writeBytes(p.y+" 1:"+p.x+"\n");
+					DataPoint p = dataPoints.get(i);
+					fp.writeBytes(p.getLocation().getY()+" 1:"+p.getLocation().getX()+"\n");
 				}
 			}
 			else
 			{
 				for(int i=0;i<n;i++)
 				{
-					point p = point_list.get(i);
-					fp.writeBytes(p.value+" 1:"+p.x+" 2:"+p.y+"\n");
+					DataPoint p = dataPoints.get(i);
+					fp.writeBytes(p.getValue()+" 1:"+p.getLocation().getX()+" 2:"+p.getLocation().getY()+"\n");
 				}
 			}
 			fp.close();
@@ -441,13 +619,14 @@ public class svm_toy extends Applet
 
 	void button_load_clicked()
 	{
-		FileDialog dialog = new FileDialog(new Frame(),"Load",FileDialog.LOAD);
+		JFileChooser dialog = new JFileChooser();
+		dialog.setDialogType(JFileChooser.OPEN_DIALOG);
 		dialog.setVisible(true);
-		String filename = dialog.getDirectory() + dialog.getFile();
-		if (filename == null) return;
-		clear_all();
+		File file = dialog.getSelectedFile();
+		if (file == null) return;
+		drawPanel.clear();
 		try {
-			BufferedReader fp = new BufferedReader(new FileReader(filename));
+			BufferedReader fp = new BufferedReader(new FileReader(file));
 			String line;
 			while((line = fp.readLine()) != null)
 			{
@@ -459,61 +638,47 @@ public class svm_toy extends Applet
 					double x = atof(st.nextToken());
 					st.nextToken();
 					double y = atof(st.nextToken());
-					point_list.add(new point(x,y,value));
+					drawPanel.addPoint(new DataPoint(x,y,value));
 				}
 				else if(st.countTokens() == 3)
 				{
 					double y = atof(st.nextToken());
 					st.nextToken();
 					double x = atof(st.nextToken());
-					point_list.add(new point(x,y,current_value));
+					drawPanel.addPoint(new DataPoint(x,y,currentValue));
 				}else
 					break;
 			}
 			fp.close();
 		} catch (IOException e) { LOG.log(Level.SEVERE, "", e); }
-		draw_all_points();
+		drawPanel.repaint();
 	}
 
-	@Override
-	protected void processMouseEvent(MouseEvent e)
-	{
-		if(e.getID() == MouseEvent.MOUSE_PRESSED)
-		{
-			if(e.getX() >= XLEN || e.getY() >= YLEN) return;
-			point p = new point((double)e.getX()/XLEN,
-					    (double)e.getY()/YLEN,
-					    current_value);
-			point_list.add(p);
-			draw_point(p);
-		}
-	}
+//	@Override
+//	public void paint(Graphics g)
+//	{
+//		// create buffer first time
+//		if(buffer == null) {
+//			buffer = this.createImage(XLEN,YLEN);
+//			buffer_gc = buffer.getGraphics();
+//			buffer_gc.setColor(colors[0]);
+//			buffer_gc.fillRect(0,0,XLEN,YLEN);
+//		}
+//		g.drawImage(buffer,0,0,this);
+//	}
 
-	@Override
-	public void paint(Graphics g)
-	{
-		// create buffer first time
-		if(buffer == null) {
-			buffer = this.createImage(XLEN,YLEN);
-			buffer_gc = buffer.getGraphics();
-			buffer_gc.setColor(colors[0]);
-			buffer_gc.fillRect(0,0,XLEN,YLEN);
-		}
-		g.drawImage(buffer,0,0,this);
-	}
-
-	@Override
-	public Dimension getPreferredSize() { return new Dimension(XLEN,YLEN+50); }
-
-	@Override
-	public void setSize(Dimension d) { setSize(d.width,d.height); }
-	@Override
-	public void setSize(int w,int h) {
-		super.setSize(w,h);
-		XLEN = w;
-		YLEN = h-50;
-		clear_all();
-	}
+//	@Override
+//	public Dimension getPreferredSize() { return new Dimension(XLEN,YLEN+50); }
+//
+//	@Override
+//	public void setSize(Dimension d) { setSize(d.width,d.height); }
+//	@Override
+//	public void setSize(int w,int h) {
+//		super.setSize(w,h);
+//		XLEN = w;
+//		YLEN = h-50;
+//		clear_all();
+//	}
 
 	private static void logHelp()
 	{
@@ -534,7 +699,8 @@ public class svm_toy extends Applet
 		try
 		{
 			// parse options
-			for(int i=0;i<argv.length;i++)
+			int i;
+			for(i=0;i<argv.length;i++)
 			{
 				if(argv[i].charAt(0) != '-') break;
 				++i;
@@ -570,29 +736,8 @@ public class svm_toy extends Applet
 			System.exit(1);
 		}
 
-		AppletFrame appletFrame = new AppletFrame("svm_toy",new svm_toy(),500,500+50);
+		AppletFrame appletFrame = new AppletFrame(new svm_toy());
+		appletFrame.setSize(640, 480);
 		appletFrame.setVisible(true);
-	}
-}
-
-/**
- * Allows to start the Applet as a desktop GUI application.
- */
-class AppletFrame extends Frame
-{
-	AppletFrame(String title, Applet applet, int width, int height)
-	{
-		super(title);
-		this.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				System.exit(0);
-			}
-		});
-		applet.init();
-		applet.setSize(width,height);
-		applet.start();
-		this.add(applet);
-		this.pack();
 	}
 }
