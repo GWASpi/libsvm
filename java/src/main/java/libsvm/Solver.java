@@ -68,7 +68,7 @@ class Solver
 	 * java: information about solution except alpha,
 	 * because we cannot return multiple values otherwise...
 	 */
-	static class SolutionInfo {
+	protected static class SolutionInfo {
 		double obj;
 		double rho;
 		double upper_bound_p;
@@ -443,24 +443,24 @@ class Solver
 		double obj_diff_min = INF;
 
 		for(int t=0;t<active_size;t++)
-			if(y[t]==+1)
+		{
+			if(y[t] == +1)
 			{
-				if(!is_upper_bound(t))
-					if(-G[t] >= Gmax)
-					{
-						Gmax = -G[t];
-						Gmax_idx = t;
-					}
+				if (!is_upper_bound(t) && (-G[t] >= Gmax))
+				{
+					Gmax = -G[t];
+					Gmax_idx = t;
+				}
 			}
 			else
 			{
-				if(!is_lower_bound(t))
-					if(G[t] >= Gmax)
-					{
-						Gmax = G[t];
-						Gmax_idx = t;
-					}
+				if(!is_lower_bound(t) && (G[t] >= Gmax))
+				{
+					Gmax = G[t];
+					Gmax_idx = t;
+				}
 			}
+		}
 
 		int i = Gmax_idx;
 		float[] Q_i = null;
@@ -558,33 +558,29 @@ class Solver
 		{
 			if(y[i]==+1)
 			{
-				if(!is_upper_bound(i))
+				if(!is_upper_bound(i) && (-G[i] >= Gmax1))
 				{
-					if(-G[i] >= Gmax1)
-						Gmax1 = -G[i];
+					Gmax1 = -G[i];
 				}
-				if(!is_lower_bound(i))
+				if(!is_lower_bound(i) && (G[i] >= Gmax2))
 				{
-					if(G[i] >= Gmax2)
-						Gmax2 = G[i];
+					Gmax2 = G[i];
 				}
 			}
 			else
 			{
-				if(!is_upper_bound(i))
+				if(!is_upper_bound(i) && (-G[i] >= Gmax2))
 				{
-					if(-G[i] >= Gmax2)
-						Gmax2 = -G[i];
+					Gmax2 = -G[i];
 				}
-				if(!is_lower_bound(i))
+				if(!is_lower_bound(i) && (G[i] >= Gmax1))
 				{
-					if(G[i] >= Gmax1)
-						Gmax1 = G[i];
+					Gmax1 = G[i];
 				}
 			}
 		}
 
-		if(unshrink == false && Gmax1 + Gmax2 <= eps*10)
+		if((unshrink == false) && ((Gmax1 + Gmax2) <= eps*10))
 		{
 			unshrink = true;
 			reconstruct_gradient();
@@ -644,5 +640,4 @@ class Solver
 
 		return r;
 	}
-
 }

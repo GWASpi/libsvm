@@ -42,24 +42,24 @@ final class Solver_NU extends Solver
 		double obj_diff_min = INF;
 
 		for(int t=0;t<active_size;t++)
-			if(y[t]==+1)
+		{
+			if(y[t] == +1)
 			{
-				if(!is_upper_bound(t))
-					if(-G[t] >= Gmaxp)
-					{
-						Gmaxp = -G[t];
-						Gmaxp_idx = t;
-					}
+				if(!is_upper_bound(t) && (-G[t] >= Gmaxp))
+				{
+					Gmaxp = -G[t];
+					Gmaxp_idx = t;
+				}
 			}
 			else
 			{
-				if(!is_lower_bound(t))
-					if(G[t] >= Gmaxn)
-					{
-						Gmaxn = G[t];
-						Gmaxn_idx = t;
-					}
+				if(!is_lower_bound(t) && (G[t] >= Gmaxn))
+				{
+					Gmaxn = G[t];
+					Gmaxn_idx = t;
+				}
 			}
+		}
 
 		int ip = Gmaxp_idx;
 		int in = Gmaxn_idx;
