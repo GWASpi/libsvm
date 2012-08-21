@@ -132,36 +132,38 @@ class svm_train
 		}
 	}
 
+	private static class BasicFormatter extends Formatter {
+
+		private final SimpleFormatter messageFormatter = new SimpleFormatter();
+		private final String newLine = System.getProperty("line.separator", "\n");
+
+		@Override
+		public String format(LogRecord record) {
+
+			String messageStr = messageFormatter.formatMessage(record) + newLine;
+
+			if (record.getLevel().intValue() > Level.INFO.intValue())
+			{
+				messageStr = record.getLevel().getName() + " " + messageStr;
+			}
+
+			if (record.getThrown() != null)
+			{
+				StringWriter exStr = new StringWriter();
+				record.getThrown().printStackTrace(new PrintWriter(exStr));
+				messageStr = messageStr + exStr.toString();
+			}
+
+			return messageStr;
+		}
+	}
+
 	public static void setupLogging()
 	{
 		LogManager logManager = LogManager.getLogManager();
 		logManager.reset();
 		ConsoleHandler consoleHandler = new ConsoleHandler();
-		Formatter basicFormatter = new Formatter() {
-
-			private final SimpleFormatter messageFormatter = new SimpleFormatter();
-			private final String newLine = System.getProperty("line.separator", "\n");
-
-			@Override
-			public String format(LogRecord record) {
-
-				String messageStr = messageFormatter.formatMessage(record) + newLine;
-
-				if (record.getLevel().intValue() > Level.INFO.intValue())
-				{
-					messageStr = record.getLevel().getName() + " " + messageStr;
-				}
-
-				if (record.getThrown() != null)
-				{
-					StringWriter exStr = new StringWriter();
-					record.getThrown().printStackTrace(new PrintWriter(exStr));
-					messageStr = messageStr + exStr.toString();
-				}
-
-				return messageStr;
-			}
-		};
+		Formatter basicFormatter = new BasicFormatter();
 		consoleHandler.setFormatter(basicFormatter);
 		Logger.getLogger("").addHandler(consoleHandler);
 	}
