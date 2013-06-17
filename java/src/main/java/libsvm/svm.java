@@ -1453,6 +1453,8 @@ public class svm
 	public static final int LIBSVM_VERSION=321; 
 	public static final Random rand = new Random();
 
+	private svm() {}
+
 	/**
 	 * @see #getVersionNumber()
 	 * @return examples: "3.0", "3.1", "3.12-SNAPSHOT", "66.6"
