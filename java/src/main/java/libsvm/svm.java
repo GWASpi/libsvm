@@ -727,6 +727,7 @@ public class svm
 			model.nSV = null;
 			model.probA = null; model.probB = null;
 			model.sv_coef = new double[1][];
+			model.sv_indices = new int[1][];
 
 			if(param.probability == 1 &&
 			   (param.svm_type == svm_parameter.EPSILON_SVR ||
@@ -747,14 +748,14 @@ public class svm
 			model.l = nSV;
 			model.SV = new svm_node[nSV][];
 			model.sv_coef[0] = new double[nSV];
-			model.sv_indices = new int[nSV];
+			model.sv_indices[0] = new int[nSV];
 			int j = 0;
 			for(i=0;i<prob.l;i++)
 				if(Math.abs(f.alpha[i]) > 0)
 				{
 					model.SV[j] = prob.x[i];
 					model.sv_coef[0][j] = f.alpha[i];
-					model.sv_indices[j] = i+1;
+					model.sv_indices[0][j] = i;
 					++j;
 				}
 		}
@@ -917,8 +918,11 @@ public class svm
 				nz_start[i] = nz_start[i-1]+nz_count[i-1];
 
 			model.sv_coef = new double[nr_class-1][];
-			for(i=0;i<nr_class-1;i++)
+			model.sv_indices = new int[nr_class-1][];
+			for(i=0;i<nr_class-1;i++) {
 				model.sv_coef[i] = new double[nnz];
+				model.sv_indices[i] = new int[nnz];
+			}
 
 			p = 0;
 			for(i=0;i<nr_class;i++)
@@ -936,12 +940,18 @@ public class svm
 					int q = nz_start[i];
 					int k;
 					for(k=0;k<ci;k++)
-						if(nonzero[si+k])
-							model.sv_coef[j-1][q++] = f[p].alpha[k];
+						if(nonzero[si+k]) {
+							model.sv_coef[j-1][q] = f[p].alpha[k];
+							model.sv_indices[j-1][q] = k;
+							++q;
+						}
 					q = nz_start[j];
 					for(k=0;k<cj;k++)
-						if(nonzero[sj+k])
-							model.sv_coef[i][q++] = f[p].alpha[ci+k];
+						if(nonzero[sj+k]) {
+							model.sv_coef[i][q] = f[p].alpha[ci+k];
+							model.sv_indices[i][q] = ci+k;
+							++q;
+						}
 					++p;
 				}
 		}
@@ -1321,6 +1331,8 @@ public class svm
 			fp.writeBytes("\n");
 		}
 
+		// TODO add stuff here to save the sv_indices to the model too
+
 		fp.close();
 	}
 
@@ -1475,6 +1487,8 @@ public class svm
 		int l = model.l;
 		model.sv_coef = new double[m][l];
 		model.SV = new svm_node[l][];
+
+		// TODO add stuff here to load the sv_indices from the model too
 
 		for(int i=0;i<l;i++)
 		{

@@ -3,6 +3,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -109,11 +110,19 @@ class svm_train
 		}
 	}
 
-	private void run(String argv[]) throws IOException
+	public void run(String argv[]) throws IOException
 	{
+		long begin = System.currentTimeMillis();
 		parse_command_line(argv);
+		long end = System.currentTimeMillis();
+		LOG.log(Level.INFO, "part: parse command line: {0}ms", (end - begin));
+
+		begin = System.currentTimeMillis();
 		read_problem();
 		error_msg = svm.svm_check_parameter(prob,param);
+		end = System.currentTimeMillis();
+		LOG.log(Level.INFO, "part: read: {0}ms", (end - begin));
+//System.exit(77);
 
 		if(error_msg != null)
 		{
@@ -127,8 +136,17 @@ class svm_train
 		}
 		else
 		{
-			model = svm.svm_train(prob,param);
+//			for (int i = 0; i < 5; i++) {
+				begin = System.currentTimeMillis();
+				model = svm.svm_train(prob,param);
+				end = System.currentTimeMillis();
+				LOG.log(Level.INFO, "part: train: {0}ms", (end - begin));
+//			}
+
+			begin = System.currentTimeMillis();
 			svm.svm_save_model(model_file_name,model);
+			end = System.currentTimeMillis();
+			LOG.log(Level.INFO, "part: write model: {0}ms", (end - begin));
 		}
 	}
 
@@ -173,7 +191,24 @@ class svm_train
 		setupLogging();
 
 		svm_train t = new svm_train();
-		t.run(argv);
+
+		String[] myArgs = argv;
+
+//		String workDir = "/home/robin/Projects/Gwaspi/var/marius/libSvmTest";
+//		String[] myArgs = new String[] {
+//			"-t", "4",
+//			"-c", "0.01",
+//			workDir + "/kernel.txt",
+//			workDir + "/model.txt"
+//		};
+//		// ./svm-train -t 4 -c 0.01 /home/robin/Projects/Gwaspi/var/marius/libSvmTest/kernel.txt model.txt
+
+//		String workDir = "/home/robin/Projects/LibSVM/var/data";
+//		String[] myArgs = new String[2];
+//		myArgs[0] = workDir + "/gisette_scale.t";
+//		myArgs[1] = workDir + "/gisette_scale.t-model.txt";
+
+		t.run(myArgs);
 	}
 
 	private static double atof(String s)
@@ -346,6 +381,7 @@ class svm_train
 		List<svm_node[]> vx = new LinkedList<svm_node[]>();
 		int max_index = 0;
 
+		long begin = System.currentTimeMillis();
 		try
 		{
 			while(true)
@@ -366,12 +402,42 @@ class svm_train
 				}
 				if(m>0) max_index = Math.max(max_index, x[m-1].index);
 				vx.add(x);
+
+//				String[] parts = line.split("[ \t\f:]+");
+//				int i = 0;
+//				vy.add(atof(parts[i++]));
+//				int m = parts.length / 2;
+//				svm_node[] x = new svm_node[m];
+//				for(int j=0;j<m;j++)
+//				{
+//					x[j] = new svm_node();
+//					x[j].index = atoi(parts[i++]);
+//					x[j].value = atof(parts[i++]);
+//				}
+//				if(m>0) max_index = Math.max(max_index, x[m-1].index);
+//				vx.add(x);
+
+//				String[] parts = line.split("[ \t\f:]+");
+//				int i = 0;
+//				vy.add(atof(parts[i++]));
+//				int m = parts.length / 2;
+//				svm_node[] x = new svm_node[m];
+//				for(int j=0;j<m;j++)
+//				{
+//					x[j] = new svm_node();
+//					x[j].index = atoi(parts[i++]);
+//					x[j].value = atof(parts[i++]);
+//				}
+//				if(m>0) max_index = Math.max(max_index, x[m-1].index);
+//				vx.add(x);
 			}
 		}
 		finally
 		{
 			fp.close();
 		}
+		long end = System.currentTimeMillis();
+		LOG.log(Level.INFO, "part: read (inner): {0}ms", (end - begin));
 
 		prob = new svm_problem();
 		prob.l = vy.size();

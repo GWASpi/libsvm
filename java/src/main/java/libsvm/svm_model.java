@@ -11,10 +11,17 @@ public class svm_model implements java.io.Serializable
 	/** The support vectors (SV[l]) */
 	public svm_node[][] SV;
 	/**
-	 * The coefficients for support vectors in decision functions
+	 * The coefficients for support vectors in decision functions.
+	 * These are commonly referred to as 'alpha's.
 	 * (<code>sv_coef[k-1][l]</code>)
 	 */
 	public double[][] sv_coef;
+	/**
+	 * The indices for support vectors.
+	 * These are indices of all the SV vectors in the original data-set.
+	 * (<code>sv_indices[k-1][l]</code>)
+	 */
+	public int[][] sv_indices;
 	/** The constants in decision functions (<code>rho[k*(k-1)/2]</code>) */
 	public double[] rho;
 	/** pairwise probability information, first parts */
@@ -26,7 +33,7 @@ public class svm_model implements java.io.Serializable
 	// for classification only
 
 	/** label of each class (<code>label[k]</code>) */
-	public int[] label;		//
+	public int[] label;
 	/**
 	 * The number of support vectors for each class (<code>nSV[k]</code>).
 	 * <code>nSV[0] + nSV[1] + ... + nSV[k-1] = l</code>
